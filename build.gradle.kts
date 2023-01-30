@@ -1,16 +1,15 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform") version "1.7.21"
+    id("convention.publication")
 }
-
-group = "io.github.mackimaow"
-version = "1.0"
-
 
 repositories {
     mavenCentral()
 }
+
+group = "io.github.mackimaow"
+version = "1.0.0"
 
 kotlin {
     jvm {

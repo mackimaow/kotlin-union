@@ -137,22 +137,22 @@ val colorAsHexWithAlpha: Union<Color> =
 	color.trans {
 		change(Color.FLOAT) { floatHex ->
 			val intHex: Int = floatHex.toInt()
-			Color.Int.wrap(intHex)
+			Color.INT.wrap(intHex)
 		}
 		execute(Color.INT) {  
 			println("I don't need to 'change' clause, I'm already as a hex")
 		}
 		change(Color.RED) { redString ->  
-			Color.Int.wrap(0xFF0000)  
+			Color.INT.wrap(0xFF0000)  
 		}  
 		change(Color.GREEN) { greenString ->  
-			Color.Int.wrap(0x00FF00)  
+			Color.INT.wrap(0x00FF00)  
 		}  
 		change(Color.BLUE) { blueString ->  
-			Color.Int.wrap(0x0000FF)  
+			Color.INT.wrap(0x0000FF)  
 		}  
-		accept(Color.Int) { colorAsHex ->  
-			Color.Int.wrap(colorAsHex | 0xFF000000)  
+		accept(Color.INT) { colorAsHex ->  
+			Color.INT.wrap(colorAsHex or 0xFF000000u.toInt())  
 		}
 		// otherwise block not needed but can be added
 	}
@@ -168,7 +168,7 @@ val color: Union<Color> = getColor()
 color.alter() {
 	change(Color.FLOAT) { floatHex ->
 		val intHex: Int = floatHex.toInt()
-		Color.Int.wrap(intHex)
+		Color.INT.wrap(intHex)
 	}
 	change(Color.INT) { colorAsHex ->  
 		if(colorAsHex < 256)  
@@ -203,17 +203,17 @@ object Colors: UnionOptions<Colors>({Colors}) {
 	}
 	
 	// add discriminator predicate to distinguish List<Int>
-	val INTS = option<List<Int>> {
+	val INTS = option<List<Int>> { obj: Any ->
 		obj is List<*> && obj.isNotEmpty() && obj[0] is Int
 	}
 	
 	// add discriminator predicate to distinguish List<String>
-	val STRINGS = option<List<String>>{
+	val STRINGS = option<List<String>>{ obj: Any ->
 		obj is List<*> && obj.isNotEmpty() && obj[0] is String
 	}
 	
 	// add the ambiguous empty list case with its own discriminator
-	val AMBIGUOUS_LIST = option<List<*>> {
+	val AMBIGUOUS_LIST = option<List<*>> { obj: Any ->
 		obj is List<*> && obj.isEmpty()
 	}
 }

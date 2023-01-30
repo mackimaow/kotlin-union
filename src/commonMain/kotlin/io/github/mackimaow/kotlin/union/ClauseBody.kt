@@ -4,11 +4,7 @@ import kotlin.jvm.JvmInline
 
 
 class BreakException internal constructor(): RuntimeException()
-// Creating one exception is more efficient to be used in control flow
-internal val BREAK_EXCEPTION = BreakException()
 class ContinueException internal constructor(): RuntimeException()
-// Creating one exception is more efficient to be used in control flow
-internal val CONTINUE_EXCEPTION = ContinueException()
 
 /**
  * The *receiver* of a clause's body when using
@@ -28,7 +24,7 @@ value class ClauseBody<R> internal constructor(
     val value: ResolverState<*, *>
 ) {
     val Break: R
-        get() = throw BREAK_EXCEPTION
+        get() = throw ControlFlowExceptions.BREAK_EXCEPTION
     val Continue: R
-        get() = throw CONTINUE_EXCEPTION
+        get() = throw ControlFlowExceptions.CONTINUE_EXCEPTION
 }

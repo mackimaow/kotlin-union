@@ -32,7 +32,7 @@ class UnionTest {
     }
 
     @Test
-    fun testUnion() {
+    fun testMap() {
 
         // animals in zoo
         val josh = Bird("Josh", 2)
@@ -349,5 +349,197 @@ class UnionTest {
             animalPen1.numberOfAnimalsInPen,
             "Failed to match number of animals in their pen while thinking of ages (First Method)"
         )
+    }
+
+
+    // Union of Int | Float | "red" | "green" | "blue"
+    object Color: UnionOptions<Color>({Color}) {
+        val INT = option<Int>() // mocking number
+        val FLOAT = option<Float>() // mocking number
+        val RED = literal("red")
+        val GREEN = literal("green")
+        val BLUE = literal("blue")
+    }
+
+    fun colorAsHexWithAlpha(color: Union<Color>): Union<Color> {
+        return color.trans {
+            change(Color.FLOAT) { floatHex ->
+                val intHex: Int = floatHex.toInt()
+                Color.INT.wrap(intHex)
+            }
+            execute(Color.INT) {
+                println("I don't need to 'change' clause, I'm already as a hex")
+            }
+            change(Color.RED) { redString ->
+                Color.INT.wrap(0xFF0000)
+            }
+            change(Color.GREEN) { greenString ->
+                Color.INT.wrap(0x00FF00)
+            }
+            change(Color.BLUE) { blueString ->
+                Color.INT.wrap(0x0000FF)
+            }
+            accept(Color.INT) { colorAsHex ->
+                Color.INT.wrap(colorAsHex or 0xFF000000u.toInt())
+            }
+        }
+    }
+
+    @Test
+    fun testTrans() {
+        val testCases: Map<*, Int> = mapOf(
+            12.0f to (12.0f.toInt() or 0xFF000000u.toInt()),
+            100.0f to (100.0f.toInt() or 0xFF000000u.toInt()),
+            0x123456 to (0x123456 or 0xFF000000u.toInt()),
+            0x654321 to (0x654321 or 0xFF000000u.toInt()),
+            "red" to (0xFF0000 or 0xFF000000u.toInt()),
+            "green" to (0x00FF00 or 0xFF000000u.toInt()),
+            "blue" to (0x0000FF or 0xFF000000u.toInt())
+        )
+
+        testCases.forEach {(colorUnwrapped, answer) ->
+            val color =  Color.wrap(colorUnwrapped!!)!!
+            val result = colorAsHexWithAlpha(color)
+            val unwrappedResult = Color.INT.unwrap(result)!!
+            assertEquals(
+                answer,
+                unwrappedResult,
+                "For $color, I got $unwrappedResult when it should be $answer"
+            )
+        }
+    }
+
+    @Test
+    fun testTransWithoutAccept() {
+        val color = Color.BLUE.wrap()
+        val resultingColor = color.trans {
+            accept(Color.INT) {
+                Color.INT.wrap(0x123456)
+            }
+        }
+        assertEquals(color, resultingColor)
+    }
+
+    @Test
+    fun testTransWithOtherwise() {
+        var color = Color.BLUE.wrap()
+        var resultingColor = color.trans {
+            accept(Color.INT) {
+                Color.INT.wrap(0x123456)
+            }
+            otherwise {
+                Color.RED.wrap()
+            }
+        }
+        assertEquals(Color.RED.wrap(), resultingColor)
+        color = Color.INT.wrap(123)
+        resultingColor = color.trans {
+            accept(Color.INT) {
+                Color.INT.wrap(0x123456)
+            }
+            otherwise {
+                Color.RED.wrap()
+            }
+        }
+        assertEquals(Color.INT.wrap(0x123456), resultingColor)
+    }
+
+    fun colorAsHexWithAlphaUsingAlter(color: Union<Color>): Pair<Union<Color>, Int> {
+        val result = object {
+            var value: Int? = null
+        }
+        val resultColor = color.alter {
+            change(Color.FLOAT) { floatHex ->
+                val intHex: Int = floatHex.toInt()
+                Color.INT.wrap(intHex)
+            }
+            execute(Color.INT) {
+                println("I don't need to 'change' clause, I'm already as a hex")
+            }
+            change(Color.RED) { redString ->
+                Color.INT.wrap(0xFF0000)
+            }
+            change(Color.GREEN) { greenString ->
+                Color.INT.wrap(0x00FF00)
+            }
+            change(Color.BLUE) { blueString ->
+                Color.INT.wrap(0x0000FF)
+            }
+            accept(Color.INT) { colorAsHex ->
+                result.value = colorAsHex or 0xFF000000u.toInt()
+            }
+        }
+        return Pair(resultColor, result.value!!)
+    }
+
+    @Test
+    fun testAlter() {
+        val testCases: Map<*, Int> = mapOf(
+            12.0f to (12.0f.toInt() or 0xFF000000u.toInt()),
+            100.0f to (100.0f.toInt() or 0xFF000000u.toInt()),
+            0x123456 to (0x123456 or 0xFF000000u.toInt()),
+            0x654321 to (0x654321 or 0xFF000000u.toInt()),
+            "red" to (0xFF0000 or 0xFF000000u.toInt()),
+            "green" to (0x00FF00 or 0xFF000000u.toInt()),
+            "blue" to (0x0000FF or 0xFF000000u.toInt())
+        )
+
+        testCases.forEach {(colorUnwrapped, answer) ->
+            val color =  Color.wrap(colorUnwrapped!!)!!
+            val (sameColor, result) = colorAsHexWithAlphaUsingAlter(color)
+            assertEquals(
+                answer,
+                result,
+                "For $color, I got $result when it should be $answer"
+            )
+            assertEquals(
+                color,
+                sameColor,
+                "For $color, alter's return doesn't match original!"
+            )
+        }
+    }
+
+    @Test
+    fun testAlterWithoutAccept() {
+        val color = Color.BLUE.wrap()
+        val result = object {
+            var value: Any? = null
+        }
+        color.alter {
+            accept(Color.INT) {
+                result.value = true
+            }
+        }
+        assertEquals(null, result.value)
+    }
+
+    @Test
+    fun testAlterWithOtherwise() {
+        var color = Color.BLUE.wrap()
+        val result = object {
+            var value: Any? = null
+        }
+        color.alter {
+            accept(Color.INT) {
+                result.value = "int"
+            }
+            otherwise {
+                result.value = "something"
+            }
+        }
+        assertEquals("something", result.value)
+
+        result.value = null
+        color = Color.INT.wrap(123)
+        color.alter {
+            accept(Color.INT) {
+                result.value = "int"
+            }
+            otherwise {
+                result.value = "something"
+            }
+        }
+        assertEquals("int", result.value)
     }
 }

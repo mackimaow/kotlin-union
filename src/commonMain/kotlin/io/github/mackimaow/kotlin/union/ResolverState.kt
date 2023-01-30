@@ -8,8 +8,6 @@ package io.github.mackimaow.kotlin.union
 class MissingOtherwiseClause internal constructor(): RuntimeException("Missing Otherwise Clause in map")
 
 class BreakResolverException internal constructor(): RuntimeException()
-// Creating one exception is more efficient to be used in control flow
-internal val BREAK_RESOLVER_EXCEPTION = BreakResolverException()
 
 
 /**
@@ -41,7 +39,7 @@ class ResolverState<L: UnionOptions<L>, R>(
     val executeReceiver = ClauseBody<Unit>(this)
 
     private val Break: Any
-        get() = throw BREAK_RESOLVER_EXCEPTION
+        get() = throw ControlFlowExceptions.BREAK_RESOLVER_EXCEPTION
 
 
     fun setOtherwiseFound() {
