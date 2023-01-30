@@ -1,4 +1,5 @@
-package io.github.mackimaow.kotlin.union
+package io.github.mackimaow.kotlin.test
+import io.github.mackimaow.kotlin.union.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*

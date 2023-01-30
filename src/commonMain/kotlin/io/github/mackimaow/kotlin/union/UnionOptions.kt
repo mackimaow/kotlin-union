@@ -56,12 +56,12 @@ class WrongUnionOptionsType internal constructor(
  * There are some complications with type erasure when supplying types to the union that have
  * generic parameters. [UnionOptions] uses runtime type checks to discriminate between types in
  * the union. Type Erasure is where this falls short. Therefore, when one adds types with
- * generic parameters, they must supply an additional argument to [UnionOptions.option()] call
+ * generic parameters, they must supply an additional argument to ~~UnionOptions.option()~~ call
  * . This additional argument is a discriminator, which is a predicate that returns true
  * given that the input is an instance of the type specified by the option, false otherwise.
  *
  * Some cases, it's impossible to tell what specific type parameter given an instance. For example,
- * a List<T> instance that is an empty list. For these cases, it is highly recommended to add an
+ * a List instance that is an empty list. For these cases, it is highly recommended to add an
  * option to the [UnionOptions] of the ambiguous case.
  * For example:
  * ```

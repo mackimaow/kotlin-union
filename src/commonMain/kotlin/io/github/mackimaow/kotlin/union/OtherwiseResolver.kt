@@ -11,6 +11,9 @@ import kotlin.jvm.JvmInline
  * @param L [UnionOptions] that specifies what types are within the union
  * @param R The return type for ~~Union.map()~~, ~~Union.trans()~~, or ~~Union.alter()~~
  */
+@Deprecated(
+    message = "Use functions Resolver.accept, Resolver.change, Resolver.execute"
+)
 @JvmInline
 value class OtherwiseResolver<L: UnionOptions<L>, R> (
     override val _state: ResolverState<L, R>

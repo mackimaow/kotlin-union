@@ -12,6 +12,9 @@ package io.github.mackimaow.kotlin.union
  *  expressions
  */
 sealed interface Resolver<L: UnionOptions<L>, R> {
+    @Deprecated(
+        message = "Use functions Resolver.accept, Resolver.change, Resolver.execute"
+    )
     val _state: ResolverState<L, R>
 }
 

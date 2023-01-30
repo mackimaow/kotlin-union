@@ -176,8 +176,8 @@ inline fun <L: UnionOptions<L>, R> Union<L>.map(
  *
  * fun colorAsHexWithAlpha(color: Union<Color>): Union<Color> {
  *      return color.trans {
- *          execute(Color.Int) {
- *              println("I don't need to 'trans' clause, I'm already as a hex")
+ *          execute(Color.INT) {
+ *              println("I don't need to 'change' clause, I'm already as a hex")
  *          }
  *          change(Color.RED) { redString ->
  *              Color.Int.wrap(0xFF0000)
@@ -188,7 +188,7 @@ inline fun <L: UnionOptions<L>, R> Union<L>.map(
  *          change(Color.BLUE) { blueString ->
  *              Color.Int.wrap(0x0000FF)
  *          }
- *          accept(Color.Int) { colorAsHex ->
+ *          accept(Color.INT) { colorAsHex ->
  *              Color.Int.wrap(colorAsHex | 0xFF000000)
  *          }
  *      }
@@ -286,3 +286,4 @@ inline fun <L: UnionOptions<L>> Union<L>.alter(
     }
     return this
 }
+

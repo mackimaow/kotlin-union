@@ -25,6 +25,9 @@ internal val BREAK_RESOLVER_EXCEPTION = BreakResolverException()
  * @param L [UnionOptions] specifying the union types for the [Union]
  * @param R The return type for the resolver
  */
+@Deprecated(
+    message = "Use functions Union.map, Union.trans, Union.alter"
+)
 class ResolverState<L: UnionOptions<L>, R>(
     var union: Union<L>
 ) {
