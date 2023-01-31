@@ -10,11 +10,12 @@ The mock implementation by this issue is used to solve externally declared union
 
 # Using In Your Projects
 
-Through gradle:
+Through gradle (Make sure that you have `mavenCentral()` in the list of repositories):
 
 ```kotlin
 val kotlinUnionVersion = "1.0.0"
 
+// this can be within commonMain for multiplatform projects if desired 
 dependencies {
 	implementation("io.github.mackimaow:kotlin-union:$kotlinUnionVersion")
 }
