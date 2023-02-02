@@ -1,6 +1,6 @@
 # kotlin-union
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.mackimaow/kotlin-union)](https://repo1.maven.org/maven2/io/github/mackimaow/kotlin-union/)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mackimaow/kotlin-union)](https://search.maven.org/artifact/io.github.mackimaow/kotlin-union/1.0.0/jar)
 
 Adds an implementation of Union Type to Kotlin that supports external declarations for typescript unions in KotlinJS. It can also be used in Kotlin JVM and Kotlin Native.
 
@@ -10,12 +10,14 @@ The mock implementation by this issue is used to solve externally declared union
 
 # Using In Your Projects
 
+## Multiplatform
+
 Through gradle (Make sure that you have `mavenCentral()` in the list of repositories):
 
 ```kotlin
 val kotlinUnionVersion = "1.0.0"
 
-// this can be within commonMain for multiplatform projects if desired 
+// this is within commonMain for multiplatform projects
 dependencies {
 	implementation("io.github.mackimaow:kotlin-union:$kotlinUnionVersion")
 }
@@ -32,6 +34,18 @@ Through maven:
 	</dependency>
 </dependencies>
 ```
+
+## Specific platform
+
+If the project is platform specific, one must change artifact id.
+
+Artifact IDs:
+- KotlinJS: `kotlin-union-js`
+- KotlinJVM: `kotlin-union-jvm`
+- KotlinNative: `kotlin-union-native`
+
+
+## Import
 
 You may then import it into your project:
 
@@ -281,5 +295,5 @@ val colorString = "red"
 println(Color.canBeWrapped(colorString)) // true
 
 val notAColorString = "strawberry"
-println(Color.canBeWrapped(notAColorString )) // false
+println(Color.canBeWrapped(notAColorString)) // false
 ``` 
