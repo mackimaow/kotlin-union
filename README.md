@@ -4,9 +4,9 @@
 
 Adds an implementation of Union Type to Kotlin that supports external declarations for typescript unions in KotlinJS. It can also be used in Kotlin JVM and Kotlin Native.
 
-Kotlin Unions, a feature not part of the language, is mocked using existing Kotlin features. It supports unions for types described in typescript (that is, literals, and external JS objects). Although other Unions 'mocks' are implemented through sealed inline classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
+Kotlin Unions, a feature not part of the language, is created using existing Kotlin features. It supports unions for types described in typescript (that is, literals, and external JS objects). Although other Unions are implemented through sealed inline classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
 
-The mock implementation by this issue is used to solve externally declared unions while also providing implementations for other multiplatform types (Kotlin JVM and Kotlin Native). Lastly, Union types would not be useful if they did not have nice control flow features along with them. That's why this mock implementation has operators such 'map' that provides control flow that is akin to Kotlin's 'when' statement/expression.
+This implementation is used to solve externally declared unions while also providing implementations for other multiplatform types (Kotlin JVM and Kotlin Native). Lastly, Union types would not be useful if they did not have nice control flow features along with them. That's why this implementation has operators such 'map' that provides control flow that is akin to Kotlin's 'when' statement/expression.
 
 # Using In Your Projects
 
