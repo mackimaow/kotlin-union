@@ -1,10 +1,15 @@
-import io.github.mackimaow.kotlin.test.GeneralUseCaseTest.NumberCases
+package io.github.mackimaow.kotlin.union.test
+
 import io.github.mackimaow.kotlin.union.MatchCases
 import io.github.mackimaow.kotlin.union.Union
 import kotlin.test.Test
 import kotlin.test.assertFails
 
-class UnionTestJVM {
+class UnionTestNative {
+    object NumberCases: MatchCases<NumberCases>() {
+        val INT by instance<Int>()
+        val FLOAT by instance<Float>()
+    }
     object NotARealUseButNeedToStillTestThis: MatchCases<NotARealUseButNeedToStillTestThis>() {
         fun bad() {
             instance<Union<NumberCases>>()
