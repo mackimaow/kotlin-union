@@ -29,11 +29,16 @@ jobs:
       - name: Grant execute permissions to Gradle Wrapper
         run: chmod +x ./gradlew
 
+      - name: Save key file
+        run: echo "$SIGNING_SECRET_KEY_RING_FILE" > private-key.asc 
+        env:
+          SIGNING_SECRET_KEY_RING_FILE: ${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}
+
       - name: Publish to Maven
         run: ./gradlew publish
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          SIGNING_SECRET_KEY_RING_FILE: ${{ secrets.SIGNING_SECRET_KEY_RING_FILE }}
+          SIGNING_SECRET_KEY_RING_FILE: private-key.asc
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
