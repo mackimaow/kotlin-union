@@ -9,18 +9,15 @@ jobs:
     environment: production
 
     steps:
-      # Step 1: Check out the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Java
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17' # Change as needed
 
-      # Step 3: Cache Gradle dependencies
       - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
@@ -32,7 +29,6 @@ jobs:
       - name: Grant execute permissions to Gradle Wrapper
         run: chmod +x ./gradlew
 
-      # Step 4: Run Maven publish
       - name: Publish to Maven
         run: ./gradlew publish
         env:
