@@ -1,0 +1,61 @@
+name: Code Coverage Check
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  code-coverage:
+    name: Run Code Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install xmllint (libxml2-utils)
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Grant execute permissions to Gradle Wrapper
+        run: chmod +x ./gradlew
+
+      - name: Run Kover Code Coverage
+        run: ./gradlew koverXmlReport
+
+      - name: Verify Coverage Thresholds
+        run: |
+          LINE_COVERAGE=$(xmllint --xpath "string(//counter[@type='LINE']/@covered)" build/reports/kover/report.xml)
+          LINE_TOTAL=$(xmllint --xpath "string(//counter[@type='LINE']/@missed + //counter[@type='LINE']/@covered)" build/reports/kover/report.xml)
+          BRANCH_COVERAGE=$(xmllint --xpath "string(//counter[@type='BRANCH']/@covered)" build/reports/kover/report.xml)
+          BRANCH_TOTAL=$(xmllint --xpath "string(//counter[@type='BRANCH']/@missed + //counter[@type='BRANCH']/@covered)" build/reports/kover/report.xml)
+
+          LINE_PERCENTAGE=$((LINE_COVERAGE * 100 / LINE_TOTAL))
+          BRANCH_PERCENTAGE=$((BRANCH_COVERAGE * 100 / BRANCH_TOTAL))
+
+          echo "Line Coverage: $LINE_PERCENTAGE%"
+          echo "Branch Coverage: $BRANCH_PERCENTAGE%"
+
+          if [ "$LINE_PERCENTAGE" -lt 90 ]; then
+            echo "❌ Code coverage is too low: $LINE_PERCENTAGE% (must be 90%+)"
+            exit 1
+          fi
+
+          if [ "$BRANCH_PERCENTAGE" -lt 80 ]; then
+            echo "❌ Branch coverage is too low: $BRANCH_PERCENTAGE% (must be 80%+)"
+            exit 1
+          fi
+
+          echo "✅ Coverage checks passed!"

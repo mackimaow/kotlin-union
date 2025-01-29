@@ -1,7 +1,11 @@
+import org.jetbrains.kotlin.ir.backend.js.compile
 
 plugins {
-    kotlin("multiplatform") version "1.7.21"
+    kotlin("multiplatform") version "2.0.10"
     id("convention.publication")
+    id("org.jetbrains.kotlinx.kover") version "0.9.1"
+//    id("java-library")
+//    jacoco
 }
 
 repositories {
@@ -9,38 +13,29 @@ repositories {
 }
 
 group = "io.github.mackimaow"
-version = "1.0.0"
+version = "2.0.0"
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-        withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
-        }
-    }
-    js(BOTH) {
+    jvm()
+    js(IR) {
         browser {
-            commonWebpackConfig {
-                cssSupport.enabled = true
-            }
             testTask {
                 useKarma {
-                    useChrome()
+                    useChromeHeadless()
                 }
             }
         }
     }
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-    val nativeTarget = when {
-        hostOs == "Mac OS X" -> macosX64("native")
-        hostOs == "Linux" -> linuxX64("native")
-        isMingwX64 -> mingwX64("native")
-        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
-    }
+    linuxX64()
+    mingwX64()
+    macosX64()
+    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    // Apply the default hierarchical project structure
+    applyDefaultHierarchyTemplate()
 
 
     sourceSets {
@@ -59,3 +54,35 @@ kotlin {
         val nativeTest by getting
     }
 }
+
+// Jacoco plugin
+//
+//jacoco {
+//    toolVersion = "0.8.10" // Specify the JaCoCo version
+//    reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
+//}
+//
+//tasks.getByName("jvmTest") {
+//    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+//}
+//
+//tasks.jacocoTestReport {
+//    dependsOn("jvmTest")
+//
+//    val coverageSourceDirs = files(
+//        layout.projectDirectory.dir("src/commonMain/kotlin"),
+//        layout.projectDirectory.dir("src/jvmMain/kotlin")
+//    )
+//
+//    val classFiles = fileTree(layout.buildDirectory.dir("classes/kotlin/jvm"))
+//    classDirectories.setFrom(classFiles)
+//    sourceDirectories.setFrom(coverageSourceDirs)
+//
+//    executionData
+//        .setFrom(layout.buildDirectory.file("jacoco/jvmTest.exec"))
+//
+//    reports {
+//        xml.required = true
+//        html.required = true
+//    }
+//}

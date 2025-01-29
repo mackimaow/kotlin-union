@@ -1,289 +1,273 @@
 package io.github.mackimaow.kotlin.union
 
-
 /**
- *
- * Maps a [Union] instance into another type with a [default] option. This is similar to a when expression
- * where the cases are specified in lambda [resolve]. One can use any [UnionOption]
- * within [UnionOptions] specified by [L] to declare clause cases and their bodies.
- * Given a [UnionOption] there are several types of clause transformations to choose from:
- * -  ~~Resolver.accept(option)~~: allows the caller to transform the clause's target
- *  into the return type then *break* the ~~Union.map()~~ expression (similar to break in a loop).
- * - ~~Resolver.change(option)~~: allows the caller to change the clause's target into a new target and **doesn't**
- *  *break* the ~~Union.map()~~ expression.
- * - ~~Resolver.execute(option)~~: allows the caller to *do something* **without** breaking
- *  the ~~Union.map()~~ expression or changing the target.
- *
- * The caller can decide to use Break and Continue
- * within any clause body (similar to for loops).
- *
- * Example:
- * ```
- * // Declaring Union of:
- * //  Int | "green" | "blue" | "red"
- * object Color: UnionOptions<Color>({Color}) {
- *      val INT = option<Int>()
- *      val GREEN = literal("green")
- *      val BLUE = literal("blue")
- *      val RED = literal("red")
- * }
- *
- * fun isFavoriteColor(color: Union<Color>): Boolean {
- *      return color.map(false) {
- *          change(Color.INT) { colorAsHex ->
- *              if(colorAsHex < 256)
- *                  Color.BLUE.wrap() // basically a blue color
- *              else
- *                  Break  // every thing else I don't care about
- *          }
- *          execute(Color.GREEN) { greenString ->
- *              println("I don't like green!")
- *          }
- *          accept(Color.BLUE) { blueString ->
- *              println("I love blue!")
- *              true
- *          }
- *      }
- * }
- * ```
- *
- * @param L The [UnionOptions] indicating the composition of options of the union.
- * @param R The resulting type of the mapping.
- * @receiver Union
- * @return [default] if no ~~Resolver.accept()~~ clauses called within [resolve] are triggered and completed,
- * otherwise it will return result of the last ~~Resolver.accept()~~ clause that completed
- * @see UnionOptions
- * @see UnionOption
- * @see Resolver
- * @see ClauseBody
+ * Same as the [run] kotlin extension function, but specifically for Union types.
+ * This function will only run the block if the union matches the [case].
+ * @param case The case to check for
+ * @param block The block to run if the case matches
+ * @return An optional of the result of the block if the case matches, otherwise None
+ * @see run
  */
-inline fun <L: UnionOptions<L>, R> Union<L>.map(
-    default: R,
-    resolve: Resolver<L, R>.() -> Unit
-): R {
-    val state = ResolverState<L, R>(this)
-    val resolver = RegularResolver(state)
-    state.runUntilResolverIsBroken {
-        resolver.resolve()
-    }
-    if (state.isValueFound()) {
-        @Suppress("UNCHECKED_CAST")
-        return state.getNullableValue() as R
-    } else {
-        return default
-    }
-}
-
-
-/**
- * Maps a [Union] instance into another type. This is similar to a when expression
- * where the cases are specified in lambda [resolve]. One can use any [UnionOption]
- * within [UnionOptions] specified by [L] to declare clause cases and their bodies.
- * Given a [UnionOption] there are several types of clause transformations to choose from:
- *  - ~~Resolver.accept(option)~~: allows the caller to transform the clause's target
- *  into the return type then *break* the ~~Union.map()~~ expression (similar to break in a loop).
- *  - ~~Resolver.change(option)~~: allows the caller to change the clause's target into a new target and **doesn't**
- *  *break* the ~~Union.map()~~ expression.
- *  - ~~Resolver.execute(Resolver)~~: allows the caller to *do something* **without** breaking
- *  the ~~Union.map()~~ expression or changing the target.
- *
- *  The caller **must** specify an *otherwise* block in this expression or a runtime exception is thrown
- *  The caller can decide to use Break and Continue within any clause body (similar to for loops).
- *
- * Example:
- * ```
- * // Declaring Union of:
- * //  Int | "green" | "blue" | "red"
- * object Color: UnionOptions<Color>({Color}) {
- *      val INT = option<Int>()
- *      val GREEN = literal("green")
- *      val BLUE = literal("blue")
- *      val RED = literal("red")
- * }
- *
- * fun isFavoriteColor(color: Union<Color>): Boolean {
- *      return color.map {
- *          change(Color.INT) { colorAsHex ->
- *              if(colorAsHex < 256)
- *                  Color.BLUE.wrap() // basically a blue color
- *              else
- *                  Break  // every thing else I don't care about
- *          }
- *          execute(Color.GREEN) { greenString ->
- *              println("I don't like green!")
- *          }
- *          accept(Color.BLUE) { blueString ->
- *              println("I love blue!")
- *              true
- *          }
- *          otherwise { colorUnion ->
- *              false
- *          }
- *      }
- * }
- * ```
- *
- * @throws MissingOtherwiseClause if the otherwise block is not called when needed within [resolve].
- * @see UnionOptions
- * @see UnionOption
- * @see Resolver
- * @see ClauseBody
- * @param L The [UnionOptions] indicating the composition of options of the [Union].
- * @param R The resulting type of the mapping.
- * @receiver [Union]
- * @return the result from the otherwise block if no ~~Resolver.accept()~~ clauses called within [resolve]
- * are triggered and completed, otherwise it will return result of the last ~~Resolver.accept()~~ clause
- * that completed.
- */
-inline fun <L: UnionOptions<L>, R> Union<L>.map(
-    resolve: OtherwiseResolver<L, R>.() -> Unit
-): R {
-    val state = ResolverState<L, R>(this)
-    val resolver = OtherwiseResolver<L, R>(state)
-    state.runUntilResolverIsBroken {
-        resolver.resolve()
-    }
-    return state.getValue()
-}
-
-
-/**
- * Transforms a [Union] instance into another instance of the [Union].
- * This is similar to a when expression where the cases are specified in lambda [resolve].
- * One can use any [UnionOption]
- * within [UnionOptions] specified by [L] to declare clause cases and their bodies.
- * Given a [UnionOption] there are several types of clause transformations to choose from:
- * -  ~~Resolver.accept(option)~~: allows the caller to transform the clause's target
- *  into the return type then *break* the ~~Union.trans()~~ expression (similar to break in a loop).
- * -  ~~Resolver.change(option)~~: allows the caller to change the clause's target into a new target and **doesn't**
- *  *break* the ~~Union.trans()~~ expression.
- *  - ~~Resolver.execute(option)~~: allows the caller to *do something* **without** breaking
- *  the ~~Union.trans()~~ expression or changing the target.
- *
- *  The caller can decide to use Break and Continue
- *  within any clause body (similar to for loops).
- *
- * Example:
- * ```
- * // Declaring Union of:
- * //  Int | "green" | "blue" | "red"
- * object Color: UnionOptions<Color>({Color}) {
- *      val INT = option<Int>()
- *      val GREEN = literal("green")
- *      val BLUE = literal("blue")
- *      val RED = literal("red")
- * }
- *
- * fun colorAsHexWithAlpha(color: Union<Color>): Union<Color> {
- *      return color.trans {
- *          execute(Color.INT) {
- *              println("I don't need to 'change' clause, I'm already as a hex")
- *          }
- *          change(Color.RED) { redString ->
- *              Color.Int.wrap(0xFF0000)
- *          }
- *          change(Color.GREEN) { greenString ->
- *              Color.Int.wrap(0x00FF00)
- *          }
- *          change(Color.BLUE) { blueString ->
- *              Color.Int.wrap(0x0000FF)
- *          }
- *          accept(Color.INT) { colorAsHex ->
- *              Color.Int.wrap(colorAsHex | 0xFF000000)
- *          }
- *      }
- * }
- * ```
- *
- * @see UnionOptions
- * @see UnionOption
- * @see Resolver
- * @see ClauseBody
- * @param L The [UnionOptions] indicating the composition of options of the [Union].
- * @receiver [Union]
- * @return the result from the otherwise block if no ~~Resolver.accept()~~ clauses called within [resolve]
- * are triggered and completed or original union if no otherwise block exists.
- * Otherwise, it will return result of the last ~~Resolver.accept()~~ clause that completed.
- */
-inline fun <L: UnionOptions<L>> Union<L>.trans(
-    resolve: OtherwiseResolver<L, Union<L>>.() -> Unit
-): Union<L> {
-    val state = ResolverState<L, Union<L>>(this)
-    val resolver = OtherwiseResolver(state)
-    state.runUntilResolverIsBroken {
-        resolver.resolve()
-    }
-    return try {
-        state.getValue()
-    } catch(e: MissingOtherwiseClause) {
-        this
-    }
+inline fun <T, R, CS: UCases<CS>> Union<CS>.runWhen(
+    case: UCase<CS, T>,
+    block: T.() -> R
+): Optional<R> {
+    return case.unwrap(this).letSome(block)
 }
 
 /**
- * Alters a [Union] instance.
- * This is similar to a when expression where the cases are specified in lambda [resolve].
- * One can use any [UnionOption]
- * within [UnionOptions] specified by [L] to declare clause cases and their bodies.
- * Given a [UnionOption] there are several types of clause transformations to choose from:
- * - ~~Resolver.accept(option)~~: allows the caller to *do something* to the
- * clause's target then *break* the ~~Union.alter()~~ expression (similar to break in a loop).
- * - ~~Resolver.change(option)~~: allows the caller to change the clause's target into a new target and **doesn't**
- * *break* the ~~Union.alter()~~ expression.
- * - ~~Resolver.execute(option)~~: allows the caller to *do something* **without** breaking
- * the ~~Union.alter()~~ expression or changing the target.
- *
- * The caller can decide to use Break and Continue
- * within any clause body (similar to for loops).
- *
- * Example:
- * ```
- * // Declaring Union of:
- * //  Int | "green" | "blue" | "red"
- * object Color: UnionOptions<Color>({Color}) {
- *      val INT = option<Int>()
- *      val GREEN = literal("green")
- *      val BLUE = literal("blue")
- *      val RED = literal("red")
- * }
- *
- * fun isThisYourFavoriteColor(color: Union<Color>) {
- *      color.alter() {
- *          change(Color.INT) { colorAsHex ->
- *              if(colorAsHex < 256)
- *                  Color.BLUE.wrap() // basically a blue color
- *              else
- *                  Break  // every thing else I don't care about
- *          }
- *          execute(Color.GREEN) { greenString ->
- *              println("I don't like green!")
- *          }
- *          accept(Color.BLUE) { blueString ->
- *              println("I love blue!")
- *          }
- *          otherwise { color ->
- *              println("I have no preference for color '$color'")
- *          }
- *      }
- * }
- * ```
- *
- * @see UnionOptions
- * @see UnionOption
- * @see Resolver
- * @see ClauseBody
- * @param L The [UnionOptions] indicating the composition of options of the [Union].
- * @receiver [Union]
- * @return the original receiver [Union] that called ~~Union.alter()~~
+ * Same as the [also] kotlin extension function, but specifically for Union types.
+ * This function will only run the block if the union matches the [case].
+ * @param case The case to check for
+ * @param block The block to run if the case matches
+ * @return The union itself
+ * @see also
  */
-inline fun <L: UnionOptions<L>> Union<L>.alter(
-    resolve: OtherwiseResolver<L, Unit>.() -> Unit
-): Union<L> {
-    val state = ResolverState<L, Unit>(this)
-    val resolver = OtherwiseResolver(state)
-    state.runUntilResolverIsBroken {
-        resolver.resolve()
-    }
+inline fun <T, CS: UCases<CS>> Union<CS>.alsoWhen(
+    case: UCase<CS, T>,
+    block: (T) -> Unit
+): Union<CS> {
+    case.unwrap(this).alsoSome(block)
     return this
 }
 
+/**
+ * Same as the [apply] kotlin extension function, but specifically for Union types.
+ * This function will only run the block if the union matches the [case].
+ * @param case The case to check for
+ * @param block The block to run if the case matches
+ * @return The union itself
+ * @see apply
+ */
+inline fun <T, CS: UCases<CS>> Union<CS>.applyWhen(
+    case: UCase<CS, T>,
+    block: T.() -> Unit
+): Union<CS> {
+    return alsoWhen(case, block)
+}
+
+/**
+ * Same as the [let] kotlin extension function, but specifically for Union types.
+ * This function will only run the block if the union matches the [case].
+ * @param case The case to check for
+ * @param block The block to run if the case matches
+ * @return An optional of the result of the block if the case matches, otherwise None
+ * @see let
+ */
+inline fun <T, R, CS: UCases<CS>> Union<CS>.letWhen(
+    case: UCase<CS, T>,
+    block: (T) -> R
+): Optional<R> {
+    return runWhen(case, block)
+}
+
+/**
+ * Same as the [takeIf] kotlin extension function, but specifically for Union types.
+ * This function will only run the block if the union matches the [case].
+ * @param case The case to check for
+ * @param block The block to run if the case matches
+ * @return An optional of the value if the case matches and the block returns true, otherwise None
+ * @see takeIf
+ */
+inline fun <T, CS: UCases<CS>> Union<CS>.takeIfWhen(
+    case: UCase<CS, T>,
+    block: (T) -> Boolean
+): Optional<T> {
+    return runWhen(case) {
+        return if (block(this)) this.asSome() else Optional.None
+    }
+}
+
+/**
+ * Same as the [takeUnless] kotlin extension function, but specifically for Union types.
+ * This function will only run the block if the union matches the [case].
+ * @param case The case to check for
+ * @param block The block to run if the case matches
+ * @return An optional of the value if the case matches and the block returns false, otherwise None
+ * @see takeUnless
+ */
+inline fun <T, CS: UCases<CS>> Union<CS>.takeUnlessWhen(
+    case: UCase<CS, T>,
+    block: (T) -> Boolean
+): Optional<T> {
+    return takeIfWhen(case) {
+        !block(it)
+    }
+}
+
+/**
+ * Morphs the union into a new union based on the block (new union-specific type of control flow).
+ * The receiver has all the same functions as the union itself and applies it to the current union (accessed by current).
+ * The current union can be changed from calling the change functions: [MorphReceiver.changeWhen],
+ * [MorphReceiver.changeByMorph], [MorphReceiver.changeByMorphingCase].
+ * @param block The block to morph the union
+ * @return The result of the block
+ */
+inline fun <R, CS: UCases<CS>> Union<CS>.morph(
+    block: MorphReceiver<CS>.() -> R
+): R {
+    return MorphReceiver(this).block()
+}
+
+/**
+ * Morphs the union into a new union based on the block (new union-specific type of control flow).
+ * The receiver has all the same functions as the union itself and applies it to the current union (accessed by current).
+ * The current union can be changed from calling the change functions: [MorphReceiver.changeWhen],
+ * [MorphReceiver.changeByMorph], [MorphReceiver.changeByMorphingCase].
+ * @param block The block to morph the union
+ * @return The result of the block
+ * @see morph
+ */
+inline fun <CS: UCases<CS>> Union<CS>.morphSelf(
+    block: MorphReceiver<CS>.() -> Unit
+): Union<CS> {
+    val morphReceiver = MorphReceiver(this)
+    morphReceiver.block()
+    return morphReceiver.current
+}
+
+/**
+ * A receiver class for morphing unions.
+ * This class is used to change the current union in a block.
+ * @param current The current union to be changed
+ */
+class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
+    /**
+     * Changes the current union to a new union if it matches the case, it will change according to [block].
+     * @param case The case to check for
+     * @param block The block to change the union
+     */
+    inline fun <T> changeWhen(
+        case: UCase<CS, T>,
+        block: T.() -> Union<CS>
+    ) {
+        current.applyWhen(case) {
+            current = block()
+        }
+    }
+
+    /**
+     * Changes the current union to a new union if it matches the case, it will change according to [block].
+     * When the case matches, the current union is morphed into a new union according to the morph [block].
+     * @param case The case to check for
+     * @param block The block to morph the union
+     * @see io.github.mackimaow.kotlin.union.morph
+     */
+    inline fun <CS1: MatchCases<CS1>> changeByMorph(
+        case: UnionCase<CS, CS1>,
+        block: MorphReceiver<CS1>.() -> Union<CS>
+    ) {
+        current.applyWhen(case) {
+            current = morph(block)
+        }
+    }
+
+    /**
+     * Changes the current union to a new union if it matches the case, it will change according to [block].
+     * When the case matches, the current union is morphed into the same union type, but with
+     * a different child union type.
+     * @param case The case to check for
+     * @param block The block to morph the union
+     * @see io.github.mackimaow.kotlin.union.morphSelf
+     */
+    inline fun <CS1: MatchCases<CS1>> changeByMorphingCase(
+        case: UnionCase<CS, CS1>,
+        block: MorphReceiver<CS1>.() -> Unit
+    ) {
+        current.applyWhen(case) {
+            current = morphSelf(block).wrapAs(case)
+        }
+    }
+
+    /**
+     * Makes a value based on the current union using [io.github.mackimaow.kotlin.union.morph]
+     * @param block The block to change the union
+     * @return The result of the block
+     * @see io.github.mackimaow.kotlin.union.morph
+     */
+    inline fun <R> morph(
+        block: MorphReceiver<CS>.() -> R
+    ) = current.morph(block)
+
+    /**
+     * Makes a new union based on the current union using [io.github.mackimaow.kotlin.union.morphSelf]
+     * @param block The block to change the union
+     * @return The result of the block
+     * @see io.github.mackimaow.kotlin.union.morphSelf
+     */
+    inline fun morphSelf(
+        block: MorphReceiver<CS>.() -> Unit
+    ) = current.morphSelf(block)
+
+    /**
+     * Performs [io.github.mackimaow.kotlin.union.runWhen] on the current union
+     * @param case The case to check for
+     * @param block The block to run if the case matches
+     * @return An optional of the result of the block if the case matches, otherwise None
+     * @see io.github.mackimaow.kotlin.union.runWhen
+    */
+    inline fun <T, R> runWhen(
+        case: UCase<CS, T>,
+        block: T.() -> R
+    ) = current.runWhen(case, block)
+
+    /**
+     * Performs [io.github.mackimaow.kotlin.union.alsoSome] on the current union
+     * @param case The case to check for
+     * @param block The block to run if the case matches
+     * @return The union itself
+     * @see io.github.mackimaow.kotlin.union.alsoSome
+     */
+    inline fun <T> alsoWhen(
+        case: UCase<CS, T>,
+        block: (T) -> Unit
+    ) = current.alsoWhen(case, block)
+
+    /**
+     * Performs [io.github.mackimaow.kotlin.union.applyWhen] on the current union
+     * @param case The case to check for
+     * @param block The block to run if the case matches
+     * @return The union itself
+     * @see io.github.mackimaow.kotlin.union.applyWhen
+     */
+    inline fun <T> applyWhen(
+        case: UCase<CS, T>,
+        block: T.() -> Unit
+    ) = current.applyWhen(case, block)
+
+    /**
+     * Performs [io.github.mackimaow.kotlin.union.letWhen] on the current union
+     * @param case The case to check for
+     * @param block The block to run if the case matches
+     * @return An optional of the result of the block if the case matches, otherwise None
+     * @see io.github.mackimaow.kotlin.union.letWhen
+     */
+    inline fun <T, R> letWhen(
+        case: UCase<CS, T>,
+        block: (T) -> R
+    ) = current.letWhen(case, block)
+
+    /**
+     * Performs [io.github.mackimaow.kotlin.union.takeIfWhen] on the current union
+     * @param case The case to check for
+     * @param block The block to run if the case matches
+     * @return An optional of the value if the case matches and the block returns true, otherwise None
+     * @see io.github.mackimaow.kotlin.union.takeIfWhen
+     */
+    inline fun <T> takeIfWhen(
+        case: UCase<CS, T>,
+        block: (T) -> Boolean
+    ) = current.takeIfWhen(case, block)
+
+    /**
+     * Performs [io.github.mackimaow.kotlin.union.takeUnlessWhen] on the current union
+     * @param case The case to check for
+     * @param block The block to run if the case matches
+     * @return An optional of the value if the case matches and the block returns false, otherwise None
+     * @see io.github.mackimaow.kotlin.union.takeUnlessWhen
+     */
+    inline fun <T> takeUnlessWhen(
+        case: UCase<CS, T>,
+        block: (T) -> Boolean
+    ) = current.takeUnlessWhen(case, block)
+}

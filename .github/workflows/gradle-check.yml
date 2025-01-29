@@ -1,0 +1,42 @@
+name: Gradle Check Before Push
+
+on:
+  push:
+    branches:
+      - '*' # Runs on all branches, change to 'main' if needed
+  pull_request:
+    branches:
+      - '*' # Runs on all PRs
+
+jobs:
+  gradle-check:
+    name: Run Gradle Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Chrome # for KotlinJS tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Grant execute permissions to Gradle Wrapper
+        run: chmod +x ./gradlew
+
+      - name: Run Gradle Check
+        run: ./gradlew check
+
+      - name: Notify on Failure
+        if: failure()
+        run: echo "❌ Gradle check failed. Push blocked."
