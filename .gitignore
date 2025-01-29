@@ -4,3 +4,7 @@ build/*
 local.properties
 private_key.txt
 private-key.asc
+test
+test1
+convention-plugins/.idea
+.kotlin/*

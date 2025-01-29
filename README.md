@@ -1,12 +1,74 @@
+# 
+
+![GitHub release](https://img.shields.io/github/v/release/mackimaow/kotlin-union) [![Maven Central](https://img.shields.io/maven-central/v/io.github.mackimaow/kotlin-union)](https://search.maven.org/artifact/io.github.mackimaow/kotlin-union/2.0.0/jar) ![Coverage](https://img.shields.io/badge/Line%20Coverage-97.5%25-brightgreen) ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-85.3%25-brightgreen)
+![License](https://img.shields.io/github/license/mackimaow/kotlin-union)
+
+
+# Motivation
+
+Say you have an external declaration for a typescript function or type that happens to use a union of types. For example, a function that takes in a color that can be either a number or a string literal:
+
+**SomeTypeScriptLibrary.ts:**
+```typescript
+type Color = number | "red" | "green" | "blue"
+
+function setColor(color: Color) {
+	//  ... code body ...
+}
+function getColor(): Color {
+	//  ... code body ...
+}
+```
+
+At the current moment (1/_/2025), KotlinJS has no better way of express the union type in a type safe manner from an external typescript library than to use dynamic, which is not type safe.
+
+**ColorExternal.kt:** (without kotlin-union)
+```kotlin
+// KotlinJS external declaration
+external fun setColor(color: dynamic)
+external fun getColor(): dynamic
+```
+
+Using kotlin-union, unions types can be created even with external declarations for them:
+
+**ColorExternal.kt:** (with kotlin-union)
+```kotlin
+// KotlinJS external declaration
+external fun setColor(color: Union<ColorCases>) // FIXED with kotlin-union
+external fun getColor(): Union<ColorCases> // FIXED with kotlin-union
+```
+
+One just needs to specify the cases ```ColorCases``` within the union:
+
+**Color.kt:**
+```kotlin
+// Union cases of typescript type:  number | "red" | "green" | "blue"
+object ColorCases: MatchCases<ColorCases>() {
+    val HEX by union(JsNumberCases)
+    val RED by obj("red")
+    val GREEN by obj("green")
+    val BLUE by obj("blue")
+}
+
+// the typscript "number" type can be translated
+// into kotlin as Union<CasesJSNumber>:
+object JsNumberCases: MatchCases<JsNumberCases>() {
+    val INT by instance<Int>()
+    val FLOAT by instance<Float>()
+}
+```
+
+With union-kotlin unions can be created and protected by type-checking and union values can be appropriately syntax-highlighted by linters (unlike values of dynamic). For control-flow and creating Union types, see the usage section below. Also see the *general rules of thumb* section for correct usage of this library.
+
 # kotlin-union
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.mackimaow/kotlin-union)](https://search.maven.org/artifact/io.github.mackimaow/kotlin-union/1.0.0/jar)
+This library adds Union Types to Kotlin that **supports external declarations for typescript unions** in KotlinJS. This library has **multiplatform support**; it may be used in Kotlin JVM and Kotlin Native.
 
-Adds an implementation of Union Type to Kotlin that supports external declarations for typescript unions in KotlinJS. It can also be used in Kotlin JVM and Kotlin Native.
+Kotlin Unions is not a feature not part of the language currently. This library supports creating kotlin unions types to match union types described in typescript (that is, literals, and external JS objects). Although other unions-like structures are very nicely implemented through sealed interfaces and classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
 
-Kotlin Unions, a feature not part of the language, is mocked using existing Kotlin features. It supports unions for types described in typescript (that is, literals, and external JS objects). Although other Unions 'mocks' are implemented through sealed inline classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
+The implementation posed here is used to solve externally declared unions while also providing implementations for other multiplatform types (Kotlin JVM and Kotlin Native). 
 
-The mock implementation by this issue is used to solve externally declared unions while also providing implementations for other multiplatform types (Kotlin JVM and Kotlin Native). Lastly, Union types would not be useful if they did not have nice control flow features along with them. That's why this mock implementation has operators such 'map' that provides control flow that is akin to Kotlin's 'when' statement/expression.
+Union types would not be useful if they did not have nice control flow features along with them. That's why this implementation has operators such 'morph' that is a unique but useful control flow that is close to Kotlin's 'when' statement/expression.
 
 # Using In Your Projects
 
@@ -15,7 +77,11 @@ The mock implementation by this issue is used to solve externally declared union
 Through gradle (Make sure that you have `mavenCentral()` in the list of repositories):
 
 ```kotlin
-val kotlinUnionVersion = "1.0.0"
+repositories {
+    mavenCentral()
+}
+
+val kotlinUnionVersion = "2.0.0"
 
 // this is within commonMain for multiplatform projects
 dependencies {
@@ -30,14 +96,14 @@ Through maven:
 	<dependency>
 	    <groupId>io.github.mackimaow</groupId>
 	    <artifactId>kotlin-union</artifactId>
-	    <version>1.0.0</version>
+	    <version>2.0.0</version>
 	</dependency>
 </dependencies>
 ```
 
 ## Specific platform
 
-If the project is platform specific, one must change artifact id.
+If the project is platform specific, change the artifact id.
 
 Artifact IDs:
 - KotlinJS: `kotlin-union-js`
@@ -47,253 +113,350 @@ Artifact IDs:
 
 ## Import
 
-You may then import it into your project:
+Then import it into your project:
 
 ```kotlin
 import io.github.mackimaow.kotlin.union.*
 
 // ... code ...
 ```
+# Usage for 2.0.0
 
-# Usage
-Say you need to mock the typescript union for color, which can be either the hex representation as a number or the literals "red", "green", or "blue":
-```typescript
-type Color = number | "red" | "green" | "blue"
+## Creating Union Types
 
-function setColor(color: Color) {
-	//  ... code body ...
+Creating Union types requires creating a corresponding UCases object (either by creating an object of type ```MatchingCases``` or ```DiscernCases```) and then adding cases by calling protected methods ```obj```, ```instance```, ```instanceWhen```, ```union```, ```unionWhen``` and then using *property delegation* to register it to that union-cases object.
+Consider the follow example (as laid out in the motivation section):
+
+```kotlin
+// Union cases of typescript type:  number | "red" | "green" | "blue"
+object ColorCases: MatchCases<ColorCases>() {
+    val HEX by union(JsNumberCases)
+    val RED by obj("red")
+    val GREEN by obj("green")
+    val BLUE by obj("blue")
 }
-function getColor(): Color {
-	//  ... code body ...
+
+// the typescript "number" type can be translated
+// into kotlin as Union<CasesJSNumber>:
+object JsNumberCases: MatchCases<JsNumberCases>() {
+    val INT by instance<Int>()
+    val FLOAT by instance<Float>()
 }
 ```
-Using kotlin-union, one can create a this type and even have a external declaration for it:
 
-**Color.kt:**
+All the possible protected methods that add cases to the union-cases object are as follows:
+
+| Case registering function | How the case accepts an object                 |
+|---------------------------|------------------------------------------------|
+| ```obj()```               | Checks by equality                             |
+| ```instance()```          | Checks by type                                 |
+| ```instanceWhen()```      | Checks by type and a specified condition       |
+| ```union()```             | Checks by union type                           |
+| ```unionWhen()```         | Checks by union type and a specified condition |
+
+### Custom Cases
+
+To create custom cases, create an extension function with UCaseSupplier. For example, say that we want to create that is shorthand for creating a js-number. We can do the following:
+
 ```kotlin
-// Union of Int | Float | "red" | "green" | "blue"
-object Color: UnionOptions<Color>({Color}) {
-	val INT = option<Int>() // mocking number
-	val FLOAT = option<Float>() // mocking number
-	val RED = literal("red")
-	val GREEN = literal("green")
-	val BLUE = literal("blue")
+// custom case jsNumber():
+fun <CS: UCases<CS>> UCaseSupplier<CS>.number() = union(JsNumberCases)
+```
+
+Now, whenever a cases object is created, the ```number()``` function is exposed via the ```case``` protected property to create a js-number case. For example, we could define ColorCases object alternatively as:
+
+```kotlin
+object ColorCases: MatchCases<ColorCases>() {
+    val HEX by case.number() // using the custom case
+    val RED by obj("red")
+    val GREEN by obj("green")
+    val BLUE by obj("blue")
 }
 ```
-And then we can provide the following external declaration to
-access the JavaScript implementation:
 
-**ColorExternal.kt:** (if needed by KotlinJS)
+### Enumeration Usage
+
+One may also treat the union-cases object as an enumeration. Access ```cases``` or ```nameToCase``` properties to get all the cases in the union-cases object. For example:
+
 ```kotlin
-// KotlinJS external declaration
-external fun setColor(color: Union<Color>)
-external fun getColor(): Union<Color>
+val cases: List<UCase<ColorCases, *>> = ColorCases.cases
+val nameToCase: Map<String, UCase<ColorCases, *>> = ColorCases.nameToCase
+```
+
+Each ```UCase``` has a name and ordinal:
+
+```kotlin
+val redCase: UCase<ColorCases, *> = ColorCases.RED
+println(redCase.name) // "RED"  
+println(redCase.ordinal) // 1
+```
+
+## Creating Union Values
+
+
+Values are converted into unions by wrapping into a union object, although what actually happens within the library implementation is a little bit more complicated. The underlining data type of ```Union``` depends on what platform is being used:
++ Kotlin JS: there is no wrapper, values are dynamically cast to ```Union```. This is needed to support external union declarations.
++ Kotlin JVM / Native: there is a wrapper type that is a value class with an instance of a type in the union as the value. This is needed to avoid invalid cast Exceptions.
+
+Regardless of the platform, the usage of the library *remains the same* and the wrapper type is a private implementation detail. To create a union value, use ```wrap()``` from either the ```MatchCases``` object or from a specific ```UCase```. You may also use the extension function ```Any?.wrapAs()``` to create union  values. For example, to create a union value of type ```ColorCases```:
+
+```kotlin
+// --- Creating unions by wrapping ---
+
+// Wrapping directly on case assures the type of union:
+val redColor: Union<ColorCases> = ColorCases.RED.wrap()
+
+// Not wrapping directly gives you an Optional<Union<ColorCases>>.
+// These will have a type of Optional.Some<ColorCases>:
+val greenColor: Optional<Union<ColorCases>> = ColorCases.wrap("green")
+val blueColor: Optional<Union<ColorCases>> = "blue".wrapAs(ColorCases)
+
+// These will have a type of Optional.None because it doesn't match any case:
+val yellowColor: Optional<Union<ColorCases>> = "yellow".wrapAs(ColorCases)
+
+// Creating unions by double wrapping:
+val intNumber: Union<JsNumberCases> = 0xFF0000.wrapAs(JsNumberCases.INT)
+val intColor: Union<ColorCases> = intNumber.wrapAs(ColorCases.HEX)
+
+// Creating a union directly (without double wrapping) from a float:
+val floatColor: Optional<Union<ColorCases>> = 0.5f.wrapAs(ColorCases)
+```
+
+## Unwrapping Union Values
+
+To unwrap a union value in a platform independent way, use ```Union.unwrap()```. This will return a type of ```Any?``` regardless of the union type.
+
+```kotlin
+// Suppose some function getColor() exists
+val myColor: Union<ColorCases> = getColor()
+val unwrappedColorValue: Any? = myColor.unwrap()
+```
+```unwrap()``` is useful when one would like to perform equality checks or hashing the actual value. If type-correct unwrapping is preferred, one must use the union-specific control-flow functions described in the section below.
+
+
+## Union Type Checks
+
+To check whether a type of instance ```obj``` is part of the union, **refrain** from using the ``is`` keyword because it does not work on all platforms. Rather use ```MatchCases.canWrap(obj)``` method:
+
+```kotlin
+val colorString = "red"
+println(ColorCases.canWrap(colorString)) // true
+
+val notAColorString = "strawberry"
+println(ColorCases.canWrap(notAColorString)) // false
 ```
 
 ## Union Control Flow
 
-Given a ```Union<Color>```, one can use ```Union.map```, ```Union.trans```, or ```Union.alter```  to distinguish between types to perform type-safe computations.
-
-#### Using map
-
-Here is an example of using map to convert a union object into another
-type:
-```kotlin
-// using map with default value
-val myColor: Union<Color> = getColor()
-  
-val isFavoriteColor = 
-	myColor.map(false) { // map color to boolean (default as false)
-		
-		// if myColor is a float, then
-		//     continue as a Int
-		change(Color.FLOAT) { floatNumber ->
-			val intNumber: Int = floatNumber.toInt()
-			Color.INT.wrap(intNumber) // change to int
-		}
-		
-		// if myColor is a Int, then
-		// 	   if it's hex value is below 256
-		//  		continue as the literal "blue"
-		//     else
-		//          return default (false)
-		change(Color.INT) { colorAsHex ->  
-			if(colorAsHex < 256)
-				// basically a blue color   
-				Color.BLUE.wrap()   
-			else  
-				Break // goes to default (false)  
-		}
-		
-		// if myColor is the literal "green", then
-		//     print("I don't like green")
-		//     and continue  
-		execute(Color.GREEN) { greenString ->  
-			println("I don't like green!")  
-		}
-		
-		// if myColor is the literal "blue", then
-		//      println("I love blue!")
-		//		return true
-		accept(Color.BLUE) { blueString ->  
-			println("I love blue!")  
-			true  
-		}
-		// anything else not accepted becomes default (false)
-	}
-```
-
-One may also use an otherwise block to create a default using map:
-```kotlin
-// using map with using otherwise
-val color: Union<Color> = getColor()
-  
-val isFavoriteColor = 
-	color.map {
-		change(Color.FLOAT) { floatHex ->
-			val intHex: Int = floatHex.toInt()
-			Color.INT.wrap(intHex)
-		}
-		change(Color.INT) { colorAsHex ->  
-			if(colorAsHex < 256)
-				Color.BLUE.wrap()   
-			else  
-				Break
-		}  
-		execute(Color.GREEN) { greenString ->  
-			println("I don't like green!")  
-		}  
-		accept(Color.BLUE) { blueString ->  
-			println("I love blue!")  
-			true  
-		}
-		// anything else not accepted goes into the
-		// otherwise block
-		otherwise { color ->
-			 println("I don't like the color $color")
-			 false
-		}
-	}
-```
-
-#### Using transform
-We can use a ```trans``` expression (short for transform) to transform the Union to another instance of that Union:
+### Kotlin Inspired Control Flow
+Given a ```Union<ColorCases>```, one can use ```Union.alsoWhen``` to distinguish between types to perform type-safe computations. ```Union.alsoWhen``` is similar to kotlin's extension function ```Any?.also``` but with an additional case parameter to run a block specifically if the union is this case:
 
 ```kotlin
-val color: Union<Color> = getColor()
+// for the sake of the example, getColor() returns a Union<ColorCases>
+val color: Union<ColorCases> = getColor()
 
-val colorAsHexWithAlpha: Union<Color> =  
-	color.trans {
-		change(Color.FLOAT) { floatHex ->
-			val intHex: Int = floatHex.toInt()
-			Color.INT.wrap(intHex)
-		}
-		execute(Color.INT) {  
-			println("I don't need to 'change' clause, I'm already as a hex")
-		}
-		change(Color.RED) { redString ->  
-			Color.INT.wrap(0xFF0000)  
-		}  
-		change(Color.GREEN) { greenString ->  
-			Color.INT.wrap(0x00FF00)  
-		}  
-		change(Color.BLUE) { blueString ->  
-			Color.INT.wrap(0x0000FF)  
-		}  
-		accept(Color.INT) { colorAsHex ->  
-			Color.INT.wrap(colorAsHex or 0xFF000000u.toInt())  
-		}
-		// otherwise block not needed but can be added
-	}
-```
-If there are instances in the union which did not get accepted, the default return of a ```trans``` is the original Union instance itself.
-
-#### Using alter
-We can use a ```alter``` expression to perform some computation to the Union instance and then return the original union instance:
-```kotlin
-val color: Union<Color> = getColor()
-
-// println my opinions on 'color'  
-color.alter() {
-	change(Color.FLOAT) { floatHex ->
-		val intHex: Int = floatHex.toInt()
-		Color.INT.wrap(intHex)
-	}
-	change(Color.INT) { colorAsHex ->  
-		if(colorAsHex < 256)  
-			Color.BLUE.wrap()
-		else  
-			Break  
-        }  
-	execute(Color.GREEN) { greenString ->  
-		println("I don't like green!")  
-	}  
-	accept(Color.BLUE) { blueString ->  
-		println("I love blue!")  
-	}  
-	otherwise { color ->  
-		println("'$color' is not blue so I don't like it")  
-	}  
+color.alsoWhen(ColorCases.HEX) { hexColor: Union<JsNumberCases> ->
+    hexColor.alsoWhen(JsNumberCases.INT) { intColor: Int ->
+        println("I'm an integer color: $intColor")
+    }.alsoWhen(JsNumberCases.FLOAT) { floatColor: Float ->
+        println("I'm a float color: $floatColor")
+    }
+}.alsoWhen(ColorCases.RED) { red: String ->
+    println("I'm a $red color")
+}.alsoWhen(ColorCases.GREEN) { green: String ->
+    println("I'm a $green color")
+}.alsoWhen(ColorCases.BLUE) { blue: String ->
+    println("I'm a $blue color")
 }
 ```
+
+One can write this even more cleanly by using kotlin ```with``` statements:
+```kotlin
+val color: Union<ColorCases> = getColor()
+
+with(ColorCases) {
+    with(JsNumberCases) {
+        color.alsoWhen(HEX) { hexColor ->
+            hexColor.alsoWhen(INT) {
+                println("I'm an integer color: $it")
+            }.alsoWhen(FLOAT) {
+                println("I'm a float color: $it")
+            }
+        }.alsoWhen(RED) {
+            println("I'm a $it color")
+        }.alsoWhen(GREEN) {
+            println("I'm a $it color")
+        }.alsoWhen(BLUE) {
+            println("I'm a $it color")
+        }       
+    }
+}
+```
+
+You may also use any of the other kotlin control flow extension functions that are fitted into the union type. Here is the table of all of them:
+
+| Union Function               | Inspired Kotlin Function      |
+|------------------------------|-------------------------------|
+| ```Union.alsoWhen()```       | ```Any?.also()```             |
+| ```Union.runWhen()```        | ```Any?.run()```              |
+| ```Union.letWhen()```        | ```Any?.let()```              |
+| ```Union.applyWhen()```      | ```Any?.apply()```            |
+| ```Union.takeIfWhen()```     | ```Any?.takeIf()```           |
+| ```Union.takeUnlessWhen()``` | ```Any?.takeUnless()```       |
+
+
+### Exclusive Control-Flow for Union: *Morph*
+
+Although the union functions declared above should be able to handle type-safe control flow for any use case, it can become more verbose than necessary. For this reason, the library provides a unique control flow function called ```morph()``` (and ```morphSelf()``` which returns a different value of the same union). This function's purpose is to translate the corresponding union type into another type in a less verbose way; it takes-in a lambda that has access to the current value of the union (via ```current```), and that lambda allows changes to this current value of the union by calls of ```changeWhen()```, ```changeByMorph()```, ```changeByMorphingCase()```. Besides these functions, the receiver has access to all the kotlin-inspired control flow functions for union as discussed above. For example: 
+
+```kotlin
+val myColor: Union<ColorCases> = getColor()
+
+// morph color union to boolean
+val isFavoriteColor: Boolean = myColor.morph {
+    // I have access to the current value of the union, which
+    // --at the moment-- is equal to myColor
+    println(current == myColor) // true
+
+    changeByMorph(ColorCases.HEX) {
+        changeWhen(JsNumberCases.FLOAT) {
+            val intHex: Int = (this * 255).toInt()
+            JsNumberCases.INT.wrap(intHex)
+        }
+        runWhen(JsNumberCases.INT) {
+            if (this < 256)
+                ColorCases.BLUE.wrap()
+            else
+                return@morph false
+        }.getOrThrow()
+    }
+
+    alsoWhen(ColorCases.GREEN) { green: String ->
+        println("I don't like $green!")
+    }
+
+    runWhen(ColorCases.BLUE) {
+        println("I love $this!")
+        true
+    }.orElse {
+        false
+    }
+}
+```
+
 
 ## Problems With Generic Types
 
 Due to type erasure in Kotlin, it's not possible to check whether a given instance is of a type with specific generic parameters at runtime. This needs to be considered when constructing type options for the union using this library. For example, a ```List<T>``` has the generic parameter ```T```, which cannot be known at runtime.
 
-There *is* a way combat this:  if one defines a union with a ```List<T>``` union option specific with ```T```, a *discriminator* (a predicate lambda) must be defined to distinguish this type. Even if one tries to supply a discriminator, the empty list of type ```List<T>``` is impossible to check the specific type parameter ```T``` at runtime. It is strongly encouraged (to avoid bugs) to add the ambiguous types as their own option and treat them as such:
+There *is* a way combat this:  if one defines a union with a ```List<T>``` union case specific with ```T```, a *matcher* (lambda) must be defined to distinguish this type. Even if a matcher is provided, the empty list of type ```List<T>``` is impossible to check the specific type parameter ```T``` at runtime. It is strongly encouraged (to avoid bugs) to separate the ambiguous types as their own case and treat them as such:
 
 ```kotlin
-// Union of List<Float> | List<Int> | List<String>
-object Colors: UnionOptions<Colors>({Colors}) {
-	// add discriminator predicate to distinguish List<Float>
-	val FLOATS = option<List<Float>> { obj: Any -> 
-		obj is List<*> && obj.isNotEmpty() && obj[0] is Float
-	}
-	
-	// add discriminator predicate to distinguish List<Int>
-	val INTS = option<List<Int>> { obj: Any ->
-		obj is List<*> && obj.isNotEmpty() && obj[0] is Int
-	}
-	
-	// add discriminator predicate to distinguish List<String>
-	val STRINGS = option<List<String>>{ obj: Any ->
-		obj is List<*> && obj.isNotEmpty() && obj[0] is String
-	}
-	
-	// add the ambiguous empty list case with its own discriminator
-	val AMBIGUOUS_LIST = option<List<*>> { obj: Any ->
-		obj is List<*> && obj.isEmpty()
-	}
+
+// Union of List<Float> | List<Int>
+object NumbersCases: MatchCases<NumbersCases>() { 
+    // add matcher to distinguish List<Float>
+    val FLOATS by instance<List<Float>> { obj: Any? ->
+        val list = obj as? List<*>
+        if (list != null) {
+            if (list.isNotEmpty() && list.all { item -> item is Float }) {
+                @Suppress("UNCHECKED_CAST")
+                val floatList = list as List<Float>
+                return@instance Optional.Some(floatList)
+            }
+        }
+        return@instance Optional.None 
+    }
+    
+    // add matcher to distinguish List<Int>
+    val INTS by instance<List<Int>> { obj: Any? ->
+        val list = obj as? List<*>
+        if (list != null) {
+            if (list.isNotEmpty() && list.all { item -> item is Int }) {
+                @Suppress("UNCHECKED_CAST")
+                val intList = list as List<Int>
+                return@instance Optional.Some(intList)
+            }
+        }
+        return@instance Optional.None
+    }
+    
+    // add the ambiguous empty list case with its own matcher 
+    val AMBIGUOUS_LIST by instance<List<*>> { obj: Any? ->
+        val list = obj as? List<*>
+        if (list != null)
+            if (list.isEmpty())
+                return@instance Optional.Some(list)
+        return@instance Optional.None 
+    }
 }
 ```
 
-## Union as a Type Wrapper 
+Every time one of the control-flow functions are used, the matcher lambda is called to check if the union is of that type. As can be seen within the list example above, this call to matcher can be **computationally expensive** as each check requires checking if all elements of the list are of a certain type. To combat this, one may alternatively create union cases by having the cases object extend ```DiscernCases``` instead of ```MatchCases```, where the lambda only needs to differentiate between other cases within union rather than match the type completely:
 
-The underlining data type of ```Union``` depends on what platform is being used:
-+ Kotlin JS: there is no wrapper, values are dynamically casted to ```Union```. This is needed to support external union declarations.
-+ Kotlin JVM / Native: there is a wrapper type that is a value class with an instance of a type in the union as the value. This is needed to avoid invalid cast Exceptions.
-
-Regardless of the platform, the usage of the library *remains the same* and the wrapper type is an private implementation detail. This means that in order to wrap a specific instance of a type within the union, one has to use either ```UnionOptions.wrap(obj)``` or ```UnionOptions.<specific option type>.wrap(obj)```:
 ```kotlin
-val color1 = Color.wrap(0xFF0000)!!
-val color2 = Color.INT.wrap(0xFF0000)
-println(color1 == color2) // true
+
+// Union of List<Float> | List<Int>
+object NumbersCases: DiscernCases<NumbersCases>() { 
+    // add differentiator to distinguish List<Float>
+    val FLOATS by instance<List<Float>> { obj: Any? ->
+        val list = obj as? List<*>
+        if (list != null) {
+            // only now have to check if the first element is a float
+            if (list.isNotEmpty() && list[0] is Float) {
+                @Suppress("UNCHECKED_CAST")
+                val floatList = list as List<Float>
+                return@instance Optional.Some(floatList)
+            }
+        }
+        return@instance Optional.None 
+    }
+    
+    // add differentiator to distinguish List<Int>
+    val INTS by instance<List<Int>> { obj: Any? ->
+        val list = obj as? List<*>
+        if (list != null) {
+            // only now have to check if the first element is a int
+            if (list.isNotEmpty() && list[0] is Int) {
+                @Suppress("UNCHECKED_CAST")
+                val intList = list as List<Int>
+                return@instance Optional.Some(intList)
+            }
+        }
+        return@instance Optional.None
+    }
+    
+    // add the ambiguous empty list case with its own differentiator 
+    val AMBIGUOUS_LIST by instance<List<*>> { obj: Any? ->
+        val list = obj as? List<*>
+        if (list != null)
+            if (list.isEmpty())
+                return@instance Optional.Some(list)
+        return@instance Optional.None 
+    }
+}
 ```
-Similarly for literals:
-```kotlin
-val color1 = Color.wrap("red")!!
-val color2 = Color.RED.wrap()
-println(color1 == color2) // true
-```
-### Type Checks
+Although ```DiscernCases``` is more efficient than ```MatchCases```, you lose the ability to use ```canWrap()``` and ```wrap()``` since --if they were allowed-- it would break type safety. Therefore, these methods are not implemented for ```DiscernCases``` objects. For similar reasons, the ```union()``` function (that specifies a union case) cannot take in a ```DiscernCases``` object as a parameter.
 
-To check whether an type of instance ```obj``` is part of the union, **refrain** from using the ``is`` keyword because it does not work on all platforms. Rather use ```UnionOptions.canBeWrapped(obj)``` method:
 
-```kotlin
-val colorString = "red"
-println(Color.canBeWrapped(colorString)) // true
+## General Rule of Thumb
 
-val notAColorString = "strawberry"
-println(Color.canBeWrapped(notAColorString)) // false
-``` 
+1. Concerning ```instance<T>()``` and ```instanceWhen<T>()``` within either ```MatchingCases``` or ```DiscernCases```, if type argument T has generic arguments (e.g. ```instance<List<String>>()```,  ```instance<Map<String, Boolean>>()```, etc.), one **must** supply the matcher/differentiator lambda to distinguish the type to combat type-erasure. Otherwise, it's not type safe!
+2. Use ```DiscernCases``` when the matcher check is expensive
+3. Treat instances of ```Union``` as if they were wrapped in another object. Use ```Union.unwrap()``` to get the value that is wrapped in the union. Use ```canWrap()``` to check if a value can be wrapped into a union.
+4. Don't use ```is``` to check if a value is a union type.
+
+
+## Coding Conventions
+
+To make the code more readable, it is recommended to use the following conventions:
+
+1. Instantiate ```MatchingCases``` or ```DiscernCases``` as an object. Other ways are functional, but this is the most readable.
+2. The name of the object that extends ```MatchingCases``` or ```DiscernCases``` should be prepended by ```Cases``` (e.g. ```ColorCases```, ```NumberCases```, etc.).
+3. Each case property name of a cases object should be SCREAMING_SNAKE_CASE (e.g. ```HEX```, ```RED```, ```GREEN```, ```BLUE```, etc.).
+4. Each case property of a cases object should be directly delegated via protected methods ```obj```, ```instance```, ```instanceWhen```, ```union```, ```unionWhen``` or by calling a custom extension function on UCaseSupplier (e.g. ```case.number()``` as described in previous sections).
+
+## Usage for older versions
+For usage only older versions, see the following links:
+
+- [1.0.0](old-version-readmes/1.0.0.md)

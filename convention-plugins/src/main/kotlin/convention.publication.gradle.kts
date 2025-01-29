@@ -60,7 +60,7 @@ publishing {
         // Provide artifacts information requited by Maven Central
         pom {
             name.set("Kotlin Union")
-            description.set("Mock implementation of Unions for Kotlin Multiplatform (JS + JVM + Native)")
+            description.set("Unions (supporting external JS declared Unions types) for Kotlin Multiplatform (JS + JVM + Native)")
             url.set("https://github.com/mackimaow/kotlin-union")
 
             licenses {
