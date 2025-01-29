@@ -29,6 +29,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Grant execute permissions to Gradle Wrapper
+        run: chmod +x ./gradlew
+
       # Step 4: Run Maven publish
       - name: Publish to Maven
         run: ./gradlew publish

@@ -26,6 +26,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v3
 
+      - name: Grant execute permissions to Gradle Wrapper
+        run: chmod +x ./gradlew
+
       - name: Run Kover Code Coverage
         run: ./gradlew koverXmlReport
 
