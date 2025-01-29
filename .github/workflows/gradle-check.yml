@@ -23,6 +23,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install Chrome # for KotlinJS tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v3
 
