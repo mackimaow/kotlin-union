@@ -51,7 +51,7 @@ object ColorCases: MatchCases<ColorCases>() {
 }
 
 // the typscript "number" type can be translated
-// into kotlin as Union<CasesJSNumber>:
+// into kotlin as Union<JsNumberCases>:
 object JsNumberCases: MatchCases<JsNumberCases>() {
     val INT by instance<Int>()
     val FLOAT by instance<Float>()
