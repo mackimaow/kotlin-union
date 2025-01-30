@@ -8,3 +8,4 @@ test/*
 test1/*
 convention-plugins/.idea
 .kotlin/*
+private-key.asc.base64
