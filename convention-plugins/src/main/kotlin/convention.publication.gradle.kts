@@ -87,3 +87,8 @@ publishing {
 signing {
     sign(publishing.publications)
 }
+
+// for some reason the these tasks are not ordered correctly:
+tasks.withType<PublishToMavenRepository>().configureEach {
+    dependsOn(tasks.withType<Sign>())
+}
