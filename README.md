@@ -1,12 +1,22 @@
 # 
 
-![GitHub release](https://img.shields.io/github/v/release/mackimaow/kotlin-union) [![Maven Central](https://img.shields.io/maven-central/v/io.github.mackimaow/kotlin-union)](https://search.maven.org/artifact/io.github.mackimaow/kotlin-union/2.0.0/jar) ![Coverage](https://img.shields.io/badge/Line%20Coverage-97.5%25-brightgreen) ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-85.3%25-brightgreen)
+![GitHub release](https://img.shields.io/github/v/release/mackimaow/kotlin-union) ![Maven Central](https://img.shields.io/maven-central/v/io.github.mackimaow/kotlin-union) ![Coverage](https://img.shields.io/badge/Line%20Coverage-92.5%25-brightgreen) ![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-77.1%25-brightgreen)
 ![License](https://img.shields.io/github/license/mackimaow/kotlin-union)
+
+# kotlin-union
+
+This library adds Union Types to Kotlin Multiplatform that   **multiplatform support**; it may be used in Kotlin JVM and Kotlin Native. This library **supports representing external typescript unions** so kotlin code can easily interface with *npm* libraries in a type-correct way for KotlinJS.
+
+Kotlin Unions is not a feature not part of the language currently. This library supports creating kotlin unions types to match union types described in typescript (that is, literals, and external JS objects). Although other unions-like structures are very nicely implemented through sealed interfaces and classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
+
+The implementation posed here is used to solve externally declared unions while also providing implementations for other multiplatform types (Kotlin JVM and Kotlin Native).
+
+Union types would not be useful if they did not have nice control flow features along with them. That's why this implementation has operators such 'morph' that is a unique but useful control flow that is close to Kotlin's 'when' statement/expression.
 
 
 # Motivation
 
-Say you have an external declaration for a typescript function or type that happens to use a union of types. For example, a function that takes in a color that can be either a number or a string literal:
+Although kotlin-union can be used as general purpose union types for regular JVM project, a big use case is for KotlinJS. For example, say you have an external declaration for a typescript function or type that happens to use a union of types. For example, a function that takes in a color that can be either a number or a string literal:
 
 **SomeTypeScriptLibrary.ts:**
 ```typescript
@@ -50,7 +60,7 @@ object ColorCases: MatchCases<ColorCases>() {
     val BLUE by obj("blue")
 }
 
-// the typscript "number" type can be translated
+// the typescript "number" type can be translated
 // into kotlin as Union<JsNumberCases>:
 object JsNumberCases: MatchCases<JsNumberCases>() {
     val INT by instance<Int>()
@@ -59,17 +69,6 @@ object JsNumberCases: MatchCases<JsNumberCases>() {
 ```
 
 With union-kotlin unions can be created and protected by type-checking and union values can be appropriately syntax-highlighted by linters (unlike values of dynamic). For control-flow and creating Union types, see the usage section below. Also see the *general rules of thumb* section for correct usage of this library.
-
-# kotlin-union
-
-This library adds Union Types to Kotlin that **supports external declarations for typescript unions** in KotlinJS. This library has **multiplatform support**; it may be used in Kotlin JVM and Kotlin Native.
-
-Kotlin Unions is not a feature not part of the language currently. This library supports creating kotlin unions types to match union types described in typescript (that is, literals, and external JS objects). Although other unions-like structures are very nicely implemented through sealed interfaces and classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
-
-The implementation posed here is used to solve externally declared unions while also providing implementations for other multiplatform types (Kotlin JVM and Kotlin Native). 
-
-Union types would not be useful if they did not have nice control flow features along with them. That's why this implementation has operators such 'morph' that is a unique but useful control flow that is close to Kotlin's 'when' statement/expression.
-
 
 # Using In Your Projects
 
@@ -82,7 +81,7 @@ repositories {
     mavenCentral()
 }
 
-val kotlinUnionVersion = "2.0.0"
+val kotlinUnionVersion = "2.0.1"
 
 // this is within commonMain for multiplatform projects
 dependencies {
@@ -97,7 +96,7 @@ Through maven:
 	<dependency>
 	    <groupId>io.github.mackimaow</groupId>
 	    <artifactId>kotlin-union</artifactId>
-	    <version>2.0.0</version>
+	    <version>2.0.1</version>
 	</dependency>
 </dependencies>
 ```
@@ -121,7 +120,7 @@ import io.github.mackimaow.kotlin.union.*
 
 // ... code ...
 ```
-# Usage for 2.0.0
+# Usage for 2.0
 
 ## Creating Union Types
 
@@ -232,7 +231,7 @@ To unwrap a union value in a platform independent way, use ```Union.unwrap()```.
 val myColor: Union<ColorCases> = getColor()
 val unwrappedColorValue: Any? = myColor.unwrap()
 ```
-```unwrap()``` is useful when one would like to perform equality checks or hashing the actual value. If type-correct unwrapping is preferred, one must use the union-specific control-flow functions described in the section below.
+```unwrap()``` is useful when one would like to perform equality checks on the unwrapped value. If type-correct unwrapping is preferred, one must use the union-specific control-flow functions described in the section below.
 
 
 ## Union Type Checks
@@ -345,6 +344,15 @@ val isFavoriteColor: Boolean = myColor.morph {
 }
 ```
 
+As said previously, the kotlin inspired functions can be used within ```morph```, but ```morph``` has additional values/function to use for control flow. Here is the table of all of them:
+
+| Morph Function               | Description Kotlin Function                                                                          |
+|------------------------------|------------------------------------------------------------------------------------------------------|
+| ```current```                | The current union value within the morph block                                                       |
+| ```changeWhen()```           | This function changes ```current``` given a certain union case                                       |
+| ```changeByMorph()```        | Same as ```changeWhen()``` but can change a union case by a nested morph                             |
+| ```changeByMorphingCase()``` | Same as ```changeByMorph()``` but changes a union case into another instance of that same union case |
+
 
 ## Problems With Generic Types
 
@@ -437,15 +445,16 @@ object NumbersCases: DiscernCases<NumbersCases>() {
     }
 }
 ```
-Although ```DiscernCases``` is more efficient than ```MatchCases```, you lose the ability to use ```canWrap()``` and ```wrap()``` since --if they were allowed-- it would break type safety. Therefore, these methods are not implemented for ```DiscernCases``` objects. For similar reasons, the ```union()``` function (that specifies a union case) cannot take in a ```DiscernCases``` object as a parameter.
+Although ```DiscernCases``` is more efficient than ```MatchCases```, you lose the ability to use ```canWrap()``` and ```wrap()``` since --if they were allowed-- certain cases would break type-correctness. Therefore, these methods are not implemented for ```DiscernCases``` objects. For similar reasons, the ```union()``` function (that specifies a union case) cannot take in a ```DiscernCases``` object as a parameter.
 
 
 ## General Rule of Thumb
 
-1. Concerning ```instance<T>()``` and ```instanceWhen<T>()``` within either ```MatchingCases``` or ```DiscernCases```, if type argument T has generic arguments (e.g. ```instance<List<String>>()```,  ```instance<Map<String, Boolean>>()```, etc.), one **must** supply the matcher/differentiator lambda to distinguish the type to combat type-erasure. Otherwise, it's not type safe!
+1. Concerning ```instance<T>()``` and ```instanceWhen<T>()``` within either ```MatchingCases``` or ```DiscernCases```, if type argument T has generic arguments (e.g. ```instance<List<String>>()```,  ```instance<Map<String, Boolean>>()```, etc.), one **must** supply the matcher/differentiator lambda to distinguish the type to combat type-erasure. Otherwise, it's not type safe! Fortunately, if this is done incorrectly, the library will throw an exception during runtime immediately when that UCases object is created.
 2. Use ```DiscernCases``` when the matcher check is expensive
 3. Treat instances of ```Union``` as if they were wrapped in another object. Use ```Union.unwrap()``` to get the value that is wrapped in the union. Use ```canWrap()``` to check if a value can be wrapped into a union.
 4. Don't use ```is``` to check if a value is a union type.
+5. Remember to use property delegation to register cases to a union-cases object (i.e. _do_ this ```val COLOR by instance<Int>()```), not by setting (i.e. **DO NOT** do this ```val COLOR = instance<Int>()```)!
 
 
 ## Coding Conventions

@@ -23,7 +23,7 @@ class UnionCase <
 ): UCase<CSParent, Union<CSChild>>() {
     override val isCase: (Union<CSChild>) -> Boolean = { true }
     override val typeCast: (Any?) -> Optional<Union<CSChild>> = {
-        val unwrappedValue = unwrapIfUnion(it)
+        val unwrappedValue = unwrapCompletelyIfUnion(it)
         unionCases.wrap(unwrappedValue)
     }
 

@@ -22,7 +22,7 @@ open class MatchCases<CS: MatchCases<CS>>: UCases<CS>() {
      * [Optional.None] if it doesn't match the cases in this [MatchCases].
      */
     fun wrap(obj: Any?): Optional<Union<CS>> {
-        val unwrappedValue = unwrapIfUnion(obj)
+        val unwrappedValue = unwrapCompletelyIfUnion(obj)
         return asWrappableItem(unwrappedValue).letSome {
             wrapUnion(it)
         }
