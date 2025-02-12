@@ -1,5 +1,6 @@
 package io.github.mackimaow.kotlin.union.test
 import io.github.mackimaow.kotlin.union.*
+import io.github.mackimaow.kotlin.union.test.GeneralUseCaseTest.RecursiveCases.union
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
@@ -369,16 +370,67 @@ class GeneralUseCaseTest {
 
     object RecursiveCases: MatchCases<RecursiveCases>() {
         val REC: Int = 0
-        fun test() {
-            // this is not an actual use case, but it needs to be tested
-            union(OtherCases).provideDelegate(this, RecursiveCases::REC /* any property would do for this test */)
+        // you are not supposed to expose UCaseSupplier publicly, but this is only done for testing
+        fun runUsingProtectedSupplier(block: UCaseSupplier<RecursiveCases>.() -> Unit) {
+            case.block()
         }
     }
 
     @Test
     fun recursive() {
-        assertFails {
-            RecursiveCases.test()
+        var ran = false
+        RecursiveCases.runUsingProtectedSupplier {
+            assertFails {
+                union(OtherCases).provideDelegate(RecursiveCases, RecursiveCases::REC /* any property would do for this test */)
+            }
+            ran = true
         }
+        assertTrue(ran)
+    }
+
+    object PoorlyDefinedCases: MatchCases<PoorlyDefinedCases>() {
+        // you are not supposed to expose UCaseSupplier publicly, but this is only done for testing
+        fun runUsingProtectedSupplier(block: UCaseSupplier<PoorlyDefinedCases>.() -> Unit) {
+            case.block()
+        }
+    }
+
+    @Test
+    fun testPoorlyDefined() {
+        var ran = false
+        PoorlyDefinedCases.runUsingProtectedSupplier {
+            // instance
+            assertFails {
+                instance<List<Int>>()
+            }
+            assertFails {
+                instance<Map<*, Int>>()
+            }
+            assertFails {
+                instance<Map<Int, *>>()
+            }
+            instance<List<*>>()
+            instance<Map<*, *>>()
+
+            // instanceWhen
+            assertFails {
+                instanceWhen<List<Int>> { true }
+                instanceWhen<List<Int>> { false }
+            }
+            assertFails {
+                instanceWhen<Map<*, Int>> { true }
+                instanceWhen<Map<*, Int>> { false }
+            }
+            assertFails {
+                instanceWhen<Map<Int, *>> { true }
+                instanceWhen<Map<Int, *>> { false }
+            }
+            instanceWhen<List<*>> { true }
+            instanceWhen<List<*>> { false }
+            instanceWhen<Map<*, *>> { true }
+            instanceWhen<Map<*, *>> { false }
+            ran = true
+        }
+        assertTrue(ran)
     }
 }

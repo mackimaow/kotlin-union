@@ -3,6 +3,8 @@ package io.github.mackimaow.kotlin.union
 import kotlin.reflect.KProperty
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.typeOf
 
 /**
  * This class is used to specify a set of cases that are to be used in a [Union].
@@ -128,6 +130,30 @@ sealed class UCases<CS: UCases<CS>> {
 
 class UCaseSupplier<CS: UCases<CS>> internal constructor(){
     /**
+     * Don't use this function explicitly!
+     */
+    @Deprecated("This function is not meant to be used explicitly. It is used to protect other inline functions.")
+    inline fun <reified T> typeMustNotHaveGenericArgs(functionName: String) {
+        val kType = typeOf<T>()
+        val specifiedTypeArgs: Map<Int, KTypeProjection> = kType.arguments.mapIndexed { index, kTypeProjection ->
+            Pair(index, kTypeProjection)
+        }.filter {
+            it.second.type != null
+        }.toMap()
+        if (specifiedTypeArgs.isNotEmpty()) {
+            val firstKey = specifiedTypeArgs.keys.first()
+            val firstItem = specifiedTypeArgs[firstKey]
+            throw IllegalArgumentException(
+                "When using $functionName without specifying parameter toType, reified type parameter T" +
+                " cannot have a type with type arguments or must use star projection '*' in place of its type arguments." +
+                " But, $functionName was called without toType and with reified type being $kType with" +
+                " type argument $firstKey being $firstItem and not *."
+            )
+        }
+    }
+
+
+    /**
      * Used to specify an object to be added to this [UCases].
      * @param T the type of the target object
      * @return [UCaseProp] the case to be registered as a property delegate
@@ -148,9 +174,8 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      * @return [UCaseProp] the case to be registered as a property delegate
      */
     inline fun <@TypeMustHaveNoGenericArgs reified T> instance(): UCaseProp<CS, T, InstanceCase<CS, T>> {
-        return instance(
-            T::class
-        ) {
+        typeMustNotHaveGenericArgs<T>("instance")
+        return instance {
             if (it is T)
                 Optional.Some(it)
             else
@@ -179,13 +204,14 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
     /**
      * Don't use this function explicitly!
      */
-    @Deprecated("This function is not meant to be used explicitly. Use inline function instance() instead.")
+    @Deprecated(
+        "Use `instance<T>(toType)` instead. This function is not meant to be used explicitly and will be removed in 3.0.0",
+        ReplaceWith("instance<T>(toType)")
+    )
     fun <T> instance(
         type: KClass<*>,
         toType: (Any?) -> Optional<T>
     ): UCaseProp<CS, T, InstanceCase<CS, T>> {
-        if (isUnionClass(type))
-            throw IllegalArgumentException("Union type cannot be added via use of instance(). Use union() instead.")
         return instance(toType)
     }
 
@@ -199,8 +225,14 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
     inline fun <@TypeMustHaveNoGenericArgs reified T> instanceWhen(
         noinline isCase: (T) -> Boolean,
     ): UCaseProp<CS, T, SpecificInstanceCase<CS, T>> {
+        typeMustNotHaveGenericArgs<T>("instanceWhen")
         return instanceWhen(
-            T::class,
+            toType = {
+                if (it is T)
+                    Optional.Some(it)
+                else
+                    Optional.None
+            },
             isCase
         )
     }
@@ -227,13 +259,14 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
     /**
      * Don't use this function explicitly!
      */
-    @Deprecated("This function is not meant to be used explicitly. Use inline function instanceWhen() instead.")
+    @Deprecated(
+        "Use `instanceWhen<T>(isCase)` instead. This function is not meant to be used explicitly and will be removed in 3.0.0",
+        ReplaceWith("instanceWhen<T>(isCase)")
+    )
     fun <T> instanceWhen(
         type: KClass<*>,
         isCase: (T) -> Boolean
     ): UCaseProp<CS, T, SpecificInstanceCase<CS, T>> {
-        if (isUnionClass(type))
-            throw IllegalArgumentException("Union type cannot be added via use of instanceWhen().")
         return instanceWhen(
             toType = {
                 if (type.isInstance(it)) {

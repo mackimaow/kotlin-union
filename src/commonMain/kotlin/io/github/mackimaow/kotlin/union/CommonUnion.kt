@@ -1,7 +1,5 @@
 package io.github.mackimaow.kotlin.union
 
-import kotlin.reflect.KClass
-
 /**
  * This provides a base interface for any [Union] type. When using KotlinJS,
  * one may use this as a base class for external declarations for [Union] types.
@@ -21,9 +19,8 @@ internal expect fun <CS: UCases<CS>> wrapUnion(obj: Any?): Union<CS>
  *
  * @return The unwrapped value.
  */
-fun <CS: UCases<CS>> Union<CS>.unwrap(): Any? = unwrapIfUnion(this)
+fun <CS: UCases<CS>> Union<CS>.unwrap(): Any? = unwrapCompletelyIfUnion(this)
 
-internal expect fun unwrapIfUnion(obj: Any?): Any?
-internal expect fun isUnionClass(classObj : KClass<*>): Boolean
-
+internal expect fun unwrapCompletelyIfUnion(obj: Any?): Any?
+internal expect fun <CS: UCases<CS>> Union<CS>.unwrapOnce(): Any?
 

@@ -42,7 +42,7 @@ sealed class UCase<CS: UCases<CS>, T> {
      * @see Optional
      */
     fun unwrap(value: Union<CS>): Optional<T> {
-        val unionValue = unwrapIfUnion(value)
+        val unionValue = value.unwrapOnce()
         return typeCast(unionValue).takeIfSome { isCase(this) }
     }
 }

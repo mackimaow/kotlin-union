@@ -323,5 +323,28 @@ class UCasesTest {
 
         val virusWrappedTwiceUnwrapped = virusWrappedTwice.unwrap()
         assertEquals(virusWrappedTwiceUnwrapped, virus)
+
+        val virusOpt1 = SmallCases.VIRUS.unwrap(virusWrapped)
+        val virusOpt2 = virusWrapped.unwrapFrom(SmallCases.VIRUS)
+        assertEquals(virusOpt1, virusOpt2)
+        assertTrue(virusOpt1.isSome)
+        virusOpt1.letSome {
+            assertEquals(it, virus)
+        }
+
+        val bacteria = Bacteria("Green")
+        val bacteriaWrapped = SmallCases.BACTERIA.wrap(bacteria).getOrThrow()
+        val virusOpt3 = SmallCases.VIRUS.unwrap(bacteriaWrapped)
+        val virusOpt4 = bacteriaWrapped.unwrapFrom(SmallCases.VIRUS)
+        assertEquals(virusOpt3, virusOpt4)
+        assertTrue(!virusOpt3.isSome)
+
+        val bacteriaOpt1 = SmallCases.BACTERIA.unwrap(bacteriaWrapped)
+        val bacteriaOpt2 = bacteriaWrapped.unwrapFrom(SmallCases.BACTERIA)
+        assertEquals(bacteriaOpt1, bacteriaOpt2)
+        assertTrue(bacteriaOpt1.isSome)
+        bacteriaOpt1.letSome {
+            assertEquals(it, bacteria)
+        }
     }
 }
