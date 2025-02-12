@@ -5,7 +5,7 @@
 
 # kotlin-union
 
-This library adds Union Types to Kotlin Multiplatform that   **multiplatform support**; it may be used in Kotlin JVM and Kotlin Native. This library **supports representing external typescript unions** so kotlin code can easily interface with *npm* libraries in a type-correct way for KotlinJS.
+This library adds Union Types to Kotlin that has **multiplatform support**; it may be used in Kotlin JVM and Kotlin Native. This library **supports representing external typescript unions** so kotlin code can easily interface with *npm* libraries in a type-correct way for KotlinJS.
 
 Kotlin Unions is not a feature not part of the language currently. This library supports creating kotlin unions types to match union types described in typescript (that is, literals, and external JS objects). Although other unions-like structures are very nicely implemented through sealed interfaces and classes, they cannot support unwrapping into JavaScript objects, making them a poor candidate for external declarations in KotlinJS.
 
