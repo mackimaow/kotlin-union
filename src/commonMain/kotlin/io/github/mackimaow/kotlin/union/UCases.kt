@@ -129,11 +129,8 @@ sealed class UCases<CS: UCases<CS>> {
 }
 
 class UCaseSupplier<CS: UCases<CS>> internal constructor(){
-    /**
-     * Don't use this function explicitly!
-     */
-    @Deprecated("This function is not meant to be used explicitly. It is used to protect other inline functions.")
-    inline fun <reified T> typeMustNotHaveGenericArgs(functionName: String) {
+    @PublishedApi
+    internal inline fun <reified T> typeMustNotHaveGenericArgs(functionName: String) {
         val kType = typeOf<T>()
         val specifiedTypeArgs: Map<Int, KTypeProjection> = kType.arguments.mapIndexed { index, kTypeProjection ->
             Pair(index, kTypeProjection)
