@@ -366,8 +366,10 @@ There *is* a way combat this:  if one defines a union with a ```List<T>``` union
 object NumbersCases: MatchCases<NumbersCases>() { 
     // add matcher to distinguish List<Float>
     val FLOATS by instance<List<Float>> { obj: Any? ->
-        val list = obj as? List<*>
-        if (list != null) {
+        val possibleList = obj as? List<*>
+        if (possibleList != null) {
+            // make sure to shallow copy the list incase it's mutable 
+            val list = possibleList.toList()
             if (list.isNotEmpty() && list.all { item -> item is Float }) {
                 @Suppress("UNCHECKED_CAST")
                 val floatList = list as List<Float>
@@ -379,8 +381,10 @@ object NumbersCases: MatchCases<NumbersCases>() {
     
     // add matcher to distinguish List<Int>
     val INTS by instance<List<Int>> { obj: Any? ->
-        val list = obj as? List<*>
-        if (list != null) {
+        val possibleList = obj as? List<*>
+        if (possibleList != null) {
+		    // make sure to shallow copy the list incase it's mutable 
+            val list = possibleList.toList()
             if (list.isNotEmpty() && list.all { item -> item is Int }) {
                 @Suppress("UNCHECKED_CAST")
                 val intList = list as List<Int>
@@ -392,10 +396,13 @@ object NumbersCases: MatchCases<NumbersCases>() {
     
     // add the ambiguous empty list case with its own matcher 
     val AMBIGUOUS_LIST by instance<List<*>> { obj: Any? ->
-        val list = obj as? List<*>
-        if (list != null)
+        val possibleList = obj as? List<*>
+        if (possibleList != null) {
+            // make sure to shallow copy the list incase it's mutable 
+            val list = possibleList.toList()
             if (list.isEmpty())
                 return@instance Optional.Some(list)
+        }
         return@instance Optional.None 
     }
 }
@@ -437,10 +444,13 @@ object NumbersCases: DiscernCases<NumbersCases>() {
     
     // add the ambiguous empty list case with its own differentiator 
     val AMBIGUOUS_LIST by instance<List<*>> { obj: Any? ->
-        val list = obj as? List<*>
-        if (list != null)
+        val possibleList = obj as? List<*>
+        if (possibleList != null) {
+		    // make sure to shallow copy the list incase it's mutable 
+		    val list = possibleList.List()
             if (list.isEmpty())
                 return@instance Optional.Some(list)
+        }
         return@instance Optional.None 
     }
 }
