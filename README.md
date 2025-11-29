@@ -447,7 +447,7 @@ object NumbersCases: DiscernCases<NumbersCases>() {
         val possibleList = obj as? List<*>
         if (possibleList != null) {
 		    // make sure to shallow copy the list incase it's mutable 
-		    val list = possibleList.List()
+		    val list = possibleList.toList()
             if (list.isEmpty())
                 return@instance Optional.Some(list)
         }
