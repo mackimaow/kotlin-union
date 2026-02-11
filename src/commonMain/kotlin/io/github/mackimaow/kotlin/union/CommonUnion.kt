@@ -12,15 +12,15 @@ package io.github.mackimaow.kotlin.union
  */
 expect sealed interface Union<CS: UCases<CS>>
 
-internal expect fun <CS: UCases<CS>> wrapUnion(obj: Any?): Union<CS>
+internal expect fun <CS: UCases<CS>> wrapUnion(obj: Any): Union<CS>
 
 /**
  * This function is used to get the value of the union/nested-unions.
  *
  * @return The unwrapped value.
  */
-fun <CS: UCases<CS>> Union<CS>.unwrap(): Any? = unwrapCompletelyIfUnion(this)
+fun <CS: UCases<CS>> Union<CS>.unwrap(): Any = unwrapCompletelyIfUnion(this)
 
-internal expect fun unwrapCompletelyIfUnion(obj: Any?): Any?
-internal expect fun <CS: UCases<CS>> Union<CS>.unwrapOnce(): Any?
+internal expect fun unwrapCompletelyIfUnion(obj: Any): Any
+internal expect fun <CS: UCases<CS>> Union<CS>.unwrapOnce(): Any
 

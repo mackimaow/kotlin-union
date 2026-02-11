@@ -32,25 +32,25 @@ class GeneralUseCaseTest {
 
         val BIRDS by instance<List<Bird>> {
             // toType to counter type erasure of List<T>
-            (it as? List<*>).asOptional().takeIfSome {
-                isNotEmpty() && all { item -> item is Bird }
-            }.letSome { list ->
+            (it as? List<*>)?.takeIf { list ->
+                list.isNotEmpty() && it.all { item -> item is Bird }
+            }?.let { list ->
                 @Suppress("UNCHECKED_CAST")
                 list as List<Bird>
             }
         }
         val GIRAFFES by instance<List<Giraffe>> {
             // toType to counter type erasure of List<T>
-            (it as? List<*>).asOptional().takeIfSome {
-                isNotEmpty() && all { item -> item is Giraffe }
-            }.letSome { list ->
+            (it as? List<*>)?.takeIf { list ->
+                list.isNotEmpty() && list.all { item -> item is Giraffe }
+            }?.let { list ->
                 @Suppress("UNCHECKED_CAST")
                 list as List<Giraffe>
             }
         }
         val EMPTY_LIST by instance<List<*>> {
             // toType to counter type erasure of List<T>
-            (it as? List<*>).asOptional()
+            (it as? List<*>)?.takeIf { list -> list.isEmpty() }
         }
     }
 
@@ -106,9 +106,9 @@ class GeneralUseCaseTest {
                     }
                     changeWhen(ZEBRA) { // transform holder
                         if (name == "Sue")
-                            wrap(brutus).getOrThrow() // Same as Brutus
+                            wrap(brutus)!! // Same as Brutus
                         else
-                            wrap(john).getOrThrow()  // Same as John
+                            wrap(john)!!  // Same as John
                     }
                     runWhen(GIRAFFE) {
                         if (name == "Mary")
@@ -147,7 +147,7 @@ class GeneralUseCaseTest {
         }
 
         testCases.map { (animal, caseAnswer) ->
-            AnimalCases.wrap(animal).getOrThrow() to caseAnswer
+            AnimalCases.wrap(animal)!! to caseAnswer
         }.forEach { (animal, caseAnswer) ->
             val age = tendAnimalAndGuessAge(animal)
             assertEquals(caseAnswer, age, "Failed using otherwise on animal $animal")
@@ -215,9 +215,9 @@ class GeneralUseCaseTest {
                     changeWhen(ZEBRA) {
                         delay(10)// orm holder
                         if (name == "Sue")
-                            wrap(brutus).getOrThrow()// Same as Brutus
+                            wrap(brutus)!!// Same as Brutus
                         else
-                            wrap(john).getOrThrow()  // Same as John
+                            wrap(john)!!  // Same as John
                     }
                     runWhen(GIRAFFE) {
                         if (name == "Mary")
@@ -256,7 +256,7 @@ class GeneralUseCaseTest {
         }
 
         testCases.map { (animal, caseAnswer) ->
-            AnimalCases.wrap(animal).getOrThrow() to caseAnswer
+            AnimalCases.wrap(animal)!! to caseAnswer
         }.forEach { (animal, caseAnswer) ->
             val age1 = tendAnimalAndGuessAge(animal)
             assertEquals(caseAnswer, age1, "Failed using otherwise on animal $animal")
@@ -327,14 +327,14 @@ class GeneralUseCaseTest {
 
         testCases.forEach {(colorUnwrapped, answer) ->
             val colorUnwrappedNew = if (colorUnwrapped is Float || colorUnwrapped is Int)
-                colorUnwrapped.wrapAs(NumberCases).getOrThrow()
+                colorUnwrapped.wrapAs(NumberCases)!!
             else
                 colorUnwrapped
-            val color =  colorUnwrappedNew.wrapAs(ColorCases).getOrThrow()
+            val color =  colorUnwrappedNew.wrapAs(ColorCases)!!
             val result = colorAsHexWithAlpha(color)
             val unwrappedResult = result
-                .unwrapFrom(ColorCases.NUMBER).toNullable()
-                ?.unwrapFrom(NumberCases.INT)?.toNullable()!!
+                .unwrapFrom(ColorCases.NUMBER)
+                ?.unwrapFrom(NumberCases.INT)!!
             assertEquals(
                 answer,
                 unwrappedResult,

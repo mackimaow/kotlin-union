@@ -115,9 +115,9 @@ class UCasesTest {
     @Test
     fun wrapInstance() {
         val str = "Hello World"
-        val strWrapped = RandomCases.wrap(str).getOrThrow()
+        val strWrapped = RandomCases.wrap(str)!!
         strWrapped.let {
-            val itUnwrapped = RandomCases.STRING.unwrap(it).getOrThrow()
+            val itUnwrapped = RandomCases.STRING.unwrap(it)!!
             assertEquals(itUnwrapped, str)
         }
     }
@@ -130,14 +130,14 @@ class UCasesTest {
         val bacteriaWrapped = SmallCases.BACTERIA.wrap(bacteria)
 
         val valueOptional1 = DiscernRandomCases.VIRUS.getValueIfMatchesCase(virusWrapped)
-        assertTrue(valueOptional1.isSome)
-        valueOptional1.letSome {
-            val actualVirus = it.unwrapFrom(SmallCases.VIRUS).getOrThrow()
+        assertTrue(valueOptional1 != null)
+        valueOptional1.let {
+            val actualVirus = it.unwrapFrom(SmallCases.VIRUS)!!
             assertEquals(actualVirus, virus)
         }
 
         val valueOptional2 = DiscernRandomCases.VIRUS.getValueIfMatchesCase(bacteriaWrapped)
-        assertTrue(!valueOptional2.isSome)
+        assertEquals(valueOptional2, null)
     }
 
     @Test
@@ -155,16 +155,14 @@ class UCasesTest {
         val valueOptional1 = value.wrapAs(DiscernRandomCases.PERCENT)
         val valueOptional2 = DiscernRandomCases.PERCENT.wrap(value)
         assertEquals(valueOptional1, valueOptional2)
-        assertTrue(valueOptional1.isSome)
-        valueOptional1.letSome {
-            assertEquals(it.unwrapFrom(DiscernRandomCases.PERCENT).getOrThrow(), value)
-        }
+        assertTrue(valueOptional1 != null)
+        assertEquals(valueOptional1.unwrapFrom(DiscernRandomCases.PERCENT)!!, value)
 
         val badValue = 101
         val badValueOptional = badValue.wrapAs(DiscernRandomCases.PERCENT)
         val badValueOptional2 = DiscernRandomCases.PERCENT.wrap(badValue)
         assertEquals(badValueOptional, badValueOptional2)
-        assertTrue(!badValueOptional.isSome)
+        assertEquals(badValueOptional, null)
 
         assertTrue(value.canWrapAs(RandomCases))
         assertFalse(badValue.canWrapAs(RandomCases))
@@ -175,29 +173,29 @@ class UCasesTest {
         val virus = Virus(true)
         val virusWrapped = SmallCases.VIRUS.wrap(virus)
         val virusWrappedTwice = RandomCases.wrap(virusWrapped)
-        assertTrue(virusWrappedTwice.isSome)
+        assertTrue(virusWrappedTwice != null)
 
         val catWrapped = RandomCases.wrap(Cat)
-        assertTrue(catWrapped.isSome)
+        assertTrue(catWrapped != null)
 
         val bacteria = Bacteria("Green")
         val bacteriaWrapped = SmallCases.BACTERIA.wrap(bacteria)
         val bacteriaWrappedTwice = RandomCases.wrap(bacteriaWrapped)
-        assertFalse(bacteriaWrappedTwice.isSome)
+        assertFalse(bacteriaWrappedTwice != null)
 
         val catWrappedTwice = RandomCases.wrap(OrganismCases.CAT.wrap())
-        assertTrue(catWrappedTwice.isSome)
+        assertTrue(catWrappedTwice != null)
 
         // wrapAs
-        val virusWrappedAs = virus.wrapAs(SmallCases).getOrThrow()
+        val virusWrappedAs = virus.wrapAs(SmallCases)!!
         virusWrappedAs.let {
-            val itUnwrapped = SmallCases.VIRUS.unwrap(it).getOrThrow()
+            val itUnwrapped = SmallCases.VIRUS.unwrap(it)!!
             assertEquals(itUnwrapped, virus)
         }
 
-        val virusWrappedTwiceAs = virusWrappedAs.wrapAs(RandomCases.VIRUS).getOrThrow()
+        val virusWrappedTwiceAs = virusWrappedAs.wrapAs(RandomCases.VIRUS)!!
         virusWrappedTwiceAs.let {
-            val itUnwrapped = RandomCases.VIRUS.unwrap(it).getOrThrow()
+            val itUnwrapped = RandomCases.VIRUS.unwrap(it)!!
             assertEquals(itUnwrapped, virusWrappedAs)
         }
     }
@@ -273,10 +271,10 @@ class UCasesTest {
     @Test
     fun moreWrapAs() {
         val virus = Virus(true)
-        assertEquals(RandomCases2.wrap(virus), Optional.None)
-        RandomCases3.wrap(virus).getOrThrow().let {
-            val itUnwrapped = RandomCases3.MICROSCOPIC.unwrap(it).getOrThrow()
-            val itUnwrapped2 = SmallCases.VIRUS.unwrap(itUnwrapped).getOrThrow()
+        assertEquals(RandomCases2.wrap(virus), null)
+        RandomCases3.wrap(virus)!!.let {
+            val itUnwrapped = RandomCases3.MICROSCOPIC.unwrap(it)!!
+            val itUnwrapped2 = SmallCases.VIRUS.unwrap(itUnwrapped)!!
             assertEquals(itUnwrapped2, virus)
         }
     }
@@ -286,9 +284,9 @@ class UCasesTest {
             toType = {
                 if (it is List<*> && it.isNotEmpty() && it.all { item ->  item is Dog }) {
                     @Suppress("UNCHECKED_CAST")
-                    (it as List<Dog>).asSome()
+                    (it as List<Dog>)
                 } else {
-                    Optional.None
+                    null
                 }
             },
             isCase = { it: List<Dog> ->
@@ -302,15 +300,15 @@ class UCasesTest {
     fun testInstanceWhenWithType() {
         val dogs = listOf(Dog(true), Dog(false))
         val dogsWrapped = RandomCases4.wrap(dogs)
-        assertTrue(dogsWrapped.isSome)
-        dogsWrapped.letSome {
-            val itUnwrapped = RandomCases4.DOGS.unwrap(it).getOrThrow()
+        assertTrue(dogsWrapped != null)
+        dogsWrapped.let {
+            val itUnwrapped = RandomCases4.DOGS.unwrap(it)!!
             assertEquals(itUnwrapped, dogs)
         }
 
         val dogs2 = listOf(Dog(true))
         val dogsWrapped2 = RandomCases4.wrap(dogs2)
-        assertFalse(dogsWrapped2.isSome)
+        assertFalse(dogsWrapped2 != null)
     }
 
     @Test
@@ -318,33 +316,28 @@ class UCasesTest {
         val virus = Virus(true)
         val virusWrapped = SmallCases.VIRUS.wrap(virus)
         val virusWrappedTwiceOpt = RandomCases.VIRUS.wrap(virusWrapped)
-        assertTrue(virusWrappedTwiceOpt.isSome)
-        val virusWrappedTwice = virusWrappedTwiceOpt.getOrThrow()
+        assertTrue(virusWrappedTwiceOpt != null)
 
-        val virusWrappedTwiceUnwrapped = virusWrappedTwice.unwrap()
+        val virusWrappedTwiceUnwrapped = virusWrappedTwiceOpt.unwrap()
         assertEquals(virusWrappedTwiceUnwrapped, virus)
 
         val virusOpt1 = SmallCases.VIRUS.unwrap(virusWrapped)
         val virusOpt2 = virusWrapped.unwrapFrom(SmallCases.VIRUS)
         assertEquals(virusOpt1, virusOpt2)
-        assertTrue(virusOpt1.isSome)
-        virusOpt1.letSome {
-            assertEquals(it, virus)
-        }
+        assertTrue(virusOpt1 != null)
+        assertEquals(virusOpt1, virus)
 
         val bacteria = Bacteria("Green")
-        val bacteriaWrapped = SmallCases.BACTERIA.wrap(bacteria).getOrThrow()
+        val bacteriaWrapped = SmallCases.BACTERIA.wrap(bacteria)!!
         val virusOpt3 = SmallCases.VIRUS.unwrap(bacteriaWrapped)
         val virusOpt4 = bacteriaWrapped.unwrapFrom(SmallCases.VIRUS)
         assertEquals(virusOpt3, virusOpt4)
-        assertTrue(!virusOpt3.isSome)
+        assertEquals(virusOpt3, null)
 
         val bacteriaOpt1 = SmallCases.BACTERIA.unwrap(bacteriaWrapped)
         val bacteriaOpt2 = bacteriaWrapped.unwrapFrom(SmallCases.BACTERIA)
         assertEquals(bacteriaOpt1, bacteriaOpt2)
-        assertTrue(bacteriaOpt1.isSome)
-        bacteriaOpt1.letSome {
-            assertEquals(it, bacteria)
-        }
+        assertTrue(bacteriaOpt1 != null)
+        assertEquals(bacteriaOpt1, bacteria)
     }
 }

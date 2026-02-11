@@ -1,7 +1,5 @@
 package io.github.mackimaow.kotlin.union.test
 
-import io.github.mackimaow.kotlin.union.test.CodeExample1Test.ColorCases
-import io.github.mackimaow.kotlin.union.test.CodeExample1Test.JsNumberCases
 import kotlin.test.Test
 import io.github.mackimaow.kotlin.union.*
 import kotlin.test.assertEquals
@@ -79,24 +77,24 @@ class CodeExample3Test() {
         // Wrapping directly on case assures the type of union:
         val redColor: Union<ColorCases> = ColorCases.RED.wrap()
 
-        // Not wrapping directly gives you an Optional<Union<ColorCases>>.
-        // These will have a type of Optional.Some<ColorCases>:
-        val greenColor: Optional<Union<ColorCases>> = ColorCases.wrap("green")
-        assertTrue(greenColor is Optional.Some)
-        val blueColor: Optional<Union<ColorCases>> = "blue".wrapAs(ColorCases)
-        assertTrue(blueColor is Optional.Some)
+        // Not wrapping directly gives you a nullable Union<ColorCases>.
+        // These will have a type of Union<ColorCases>:
+        val greenColor: Union<ColorCases>? = ColorCases.wrap("green")
+        assertTrue(greenColor != null)
+        val blueColor: Union<ColorCases>? = "blue".wrapAs(ColorCases)
+        assertTrue(blueColor != null)
 
         // These will have a type of Optional.None because it doesn't match any case:
-        val yellowColor: Optional<Union<ColorCases>> = "yellow".wrapAs(ColorCases)
-        assertEquals(yellowColor, Optional.None)
+        val yellowColor: Union<ColorCases>? = "yellow".wrapAs(ColorCases)
+        assertEquals(yellowColor, null)
 
         // Creating unions by double wrapping:
         val intNumber: Union<JsNumberCases> = 0xFF0000.wrapAs(JsNumberCases.INT)
         val intColor: Union<ColorCases> = intNumber.wrapAs(ColorCases.HEX)
 
         // Creating a union directly (without double wrapping) from a float:
-        val floatColor: Optional<Union<ColorCases>> = 0.5f.wrapAs(ColorCases)
-        assertTrue(floatColor is Optional.Some)
+        val floatColor: Union<ColorCases>? = 0.5f.wrapAs(ColorCases)
+        assertTrue(floatColor != null)
     }
 
     @Test
@@ -179,7 +177,7 @@ class CodeExample3Test() {
                         ColorCases.BLUE.wrap()
                     else
                         return@morph false
-                }.getOrThrow()
+                }!!
             }
 
             alsoWhen(ColorCases.GREEN) { green: String ->
@@ -189,9 +187,7 @@ class CodeExample3Test() {
             runWhen(ColorCases.BLUE) {
                 println("I love $this!")
                 true
-            }.orElse {
-                false
-            }
+            } ?: false
         }
     }
 }
@@ -206,10 +202,10 @@ class CodeExample4Test() {
                 if (list.isNotEmpty() && list.all { item -> item is Float }) {
                     @Suppress("UNCHECKED_CAST")
                     val floatList = list as List<Float>
-                    return@instance Optional.Some(floatList)
+                    return@instance floatList
                 }
             }
-            return@instance Optional.None
+            return@instance null
         }
 
         // add matcher to distinguish List<Int>
@@ -219,10 +215,10 @@ class CodeExample4Test() {
                 if (list.isNotEmpty() && list.all { item -> item is Int }) {
                     @Suppress("UNCHECKED_CAST")
                     val intList = list as List<Int>
-                    return@instance Optional.Some(intList)
+                    return@instance intList
                 }
             }
-            return@instance Optional.None
+            return@instance null
         }
 
         // add the ambiguous empty list case with its own matcher
@@ -230,8 +226,8 @@ class CodeExample4Test() {
             val list = obj as? List<*>
             if (list != null)
                 if (list.isEmpty())
-                    return@instance Optional.Some(list)
-            return@instance Optional.None
+                    return@instance list
+            return@instance null
         }
     }
 }
@@ -248,10 +244,10 @@ class CodeExample5Test() {
                 if (list.isNotEmpty() && list[0] is Float) {
                     @Suppress("UNCHECKED_CAST")
                     val floatList = list as List<Float>
-                    return@instance Optional.Some(floatList)
+                    return@instance floatList
                 }
             }
-            return@instance Optional.None
+            return@instance null
         }
 
         // add differentiator to distinguish List<Int>
@@ -262,10 +258,10 @@ class CodeExample5Test() {
                 if (list.isNotEmpty() && list[0] is Int) {
                     @Suppress("UNCHECKED_CAST")
                     val intList = list as List<Int>
-                    return@instance Optional.Some(intList)
+                    return@instance intList
                 }
             }
-            return@instance Optional.None
+            return@instance null
         }
 
         // add the ambiguous empty list case with its own differentiator
@@ -273,8 +269,8 @@ class CodeExample5Test() {
             val list = obj as? List<*>
             if (list != null)
                 if (list.isEmpty())
-                    return@instance Optional.Some(list)
-            return@instance Optional.None
+                    return@instance list
+            return@instance null
         }
     }
 }

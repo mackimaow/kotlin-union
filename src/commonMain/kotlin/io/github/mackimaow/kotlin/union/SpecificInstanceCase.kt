@@ -11,9 +11,9 @@ package io.github.mackimaow.kotlin.union
  * @property ordinal is the position of the case in the union
  * @property parent is the [UCases] instance that contains this instance
  */
-class SpecificInstanceCase<CS: UCases<CS>, T> internal constructor(
+class SpecificInstanceCase<CS: UCases<CS>, T: Any> internal constructor(
     override val isCase: (T) -> Boolean,
-    override val typeCast: (Any?) -> Optional<T>,
+    override val typeCast: (Any?) -> T?,
     override val name: String,
     override val ordinal: Int,
     override val parent: CS
@@ -24,11 +24,11 @@ class SpecificInstanceCase<CS: UCases<CS>, T> internal constructor(
      * @param obj the object to wrap
      * @return the [Union] wrapping the object (if it is the specific case)
      */
-    fun wrap(obj: T): Optional<Union<CS>> {
+    fun wrap(obj: T): Union<CS>? {
         return if (isCase(obj))
-            wrapUnion<CS>(obj).asSome()
+            wrapUnion<CS>(obj)
         else
-            Optional.None
+            null
     }
 
     override fun toString(): String {
@@ -41,8 +41,8 @@ class SpecificInstanceCase<CS: UCases<CS>, T> internal constructor(
  * @param CS [UCases] specifying the union cases for the [Union]
  * @param T the type of the object to wrap
  * @param case the [SpecificInstanceCase] that this object should be represented as within the union.
- * @return [this] object wrapped as an optional [Union] (if it is the specific case) otherwise [Optional.None]
+ * @return [this] as a [Union] (if it is the specific case) otherwise null
  */
-fun <CS: UCases<CS>, T> T.wrapAs(case: SpecificInstanceCase<CS, T>): Optional<Union<CS>> {
+fun <CS: UCases<CS>, T: Any> T.wrapAs(case: SpecificInstanceCase<CS, T>): Union<CS>? {
     return case.wrap(this)
 }

@@ -22,33 +22,35 @@ class SpecificUnionCase<
     override val ordinal: Int,
     override val parent: CSParent
 ): UCase<CSParent, Union<CSChild>>() {
-    override val typeCast: (Any?) -> Optional<Union<CSChild>> = {
-        val unwrappedValue = unwrapCompletelyIfUnion(it)
-        unionCases.wrap(unwrappedValue)
+    override val typeCast: (Any?) -> Union<CSChild>? = {
+        it?.run {
+            val unwrappedValue = unwrapCompletelyIfUnion(this)
+            unionCases.wrap(unwrappedValue)
+        }
     }
 
     internal fun recursiveToWrappableItem(
         unwrappedValue: Any?,
-        cachedUnionValues: MutableMap<MatchCases<*>, Optional<Union<*>>>
-    ): Optional<*> {
-        cachedUnionValues[unionCases]?.runSome {
-            @Suppress("UNCHECKED_CAST")
+        cachedUnionValues: MutableMap<MatchCases<*>, Union<*>?>
+    ): Any? {
+        cachedUnionValues[unionCases]?.run {
+            @Suppress("UNCHECKED_CAST") // I may not need this cast here and may just use nullability
             val unionValue = (
                 this as Union<CSChild>
             )
             if (isCase(unionValue))
-                return unionValue.asSome()
+                return unionValue
         }
-        return unionCases.recursiveWrap(unwrappedValue, cachedUnionValues).takeIfSome(isCase)
+        return unionCases.recursiveWrap(unwrappedValue, cachedUnionValues)?.takeIf(isCase)
     }
 
     /**
-     * @return an [Optional.Some] of the instance [obj] wrapped as a [Union] if it is this case,
-     * otherwise [Optional.None]
+     * @return the instance [obj] wrapped as a [Union] if it is this case,
+     * otherwise null
      */
-    fun wrap(obj: Union<CSChild>): Optional<Union<CSParent>> {
-        if (!isCase(obj)) return Optional.None
-        return wrapUnion<CSParent>(obj).asSome()
+    fun wrap(obj: Union<CSChild>): Union<CSParent>? {
+        if (!isCase(obj)) return null
+        return wrapUnion<CSParent>(obj)
     }
 
     override fun toString(): String {
@@ -62,14 +64,14 @@ class SpecificUnionCase<
  * @param CSParent The [UCases] of the parent union.
  * @param CSChild The specific union (specified within [CSParent]) of the case.
  * @param case The specific case for which [this] should be registered under when wrapped as a union.
- * @return an [Optional.Some] of the target [Union] wrapped within another [Union] of the parent [UCases] object
- * if it matches [case], otherwise [Optional.None]
+ * @return a [Union] wrapped within another [Union] of the parent [UCases] object
+ * if it matches [case], otherwise null
  */
 fun <
     CSParent: UCases<CSParent>,
     CSChild: MatchCases<CSChild>
 > Union<CSChild>.wrapAs(
     case: SpecificUnionCase<CSParent, CSChild>
-): Optional<Union<CSParent>> {
+): Union<CSParent>? {
     return case.wrap(this)
 }

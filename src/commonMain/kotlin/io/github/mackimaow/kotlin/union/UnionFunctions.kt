@@ -5,14 +5,14 @@ package io.github.mackimaow.kotlin.union
  * This function will only run the block if the union matches the [case].
  * @param case The case to check for
  * @param block The block to run if the case matches
- * @return An optional of the result of the block if the case matches, otherwise None
+ * @return An optional of the result of the block if the case matches, otherwise null
  * @see run
  */
-inline fun <T, R, CS: UCases<CS>> Union<CS>.runWhen(
+inline fun <T: Any, R, CS: UCases<CS>> Union<CS>.runWhen(
     case: UCase<CS, T>,
     block: T.() -> R
-): Optional<R> {
-    return case.unwrap(this).letSome(block)
+): R? {
+    return case.unwrap(this)?.run(block)
 }
 
 /**
@@ -23,11 +23,11 @@ inline fun <T, R, CS: UCases<CS>> Union<CS>.runWhen(
  * @return The union itself
  * @see also
  */
-inline fun <T, CS: UCases<CS>> Union<CS>.alsoWhen(
+inline fun <T: Any, CS: UCases<CS>> Union<CS>.alsoWhen(
     case: UCase<CS, T>,
     block: (T) -> Unit
 ): Union<CS> {
-    case.unwrap(this).alsoSome(block)
+    case.unwrap(this)?.also(block)
     return this
 }
 
@@ -39,7 +39,7 @@ inline fun <T, CS: UCases<CS>> Union<CS>.alsoWhen(
  * @return The union itself
  * @see apply
  */
-inline fun <T, CS: UCases<CS>> Union<CS>.applyWhen(
+inline fun <T: Any, CS: UCases<CS>> Union<CS>.applyWhen(
     case: UCase<CS, T>,
     block: T.() -> Unit
 ): Union<CS> {
@@ -51,13 +51,13 @@ inline fun <T, CS: UCases<CS>> Union<CS>.applyWhen(
  * This function will only run the block if the union matches the [case].
  * @param case The case to check for
  * @param block The block to run if the case matches
- * @return An optional of the result of the block if the case matches, otherwise None
+ * @return An optional of the result of the block if the case matches, otherwise null
  * @see let
  */
-inline fun <T, R, CS: UCases<CS>> Union<CS>.letWhen(
+inline fun <T: Any, R, CS: UCases<CS>> Union<CS>.letWhen(
     case: UCase<CS, T>,
     block: (T) -> R
-): Optional<R> {
+): R? {
     return runWhen(case, block)
 }
 
@@ -66,15 +66,15 @@ inline fun <T, R, CS: UCases<CS>> Union<CS>.letWhen(
  * This function will only run the block if the union matches the [case].
  * @param case The case to check for
  * @param block The block to run if the case matches
- * @return An optional of the value if the case matches and the block returns true, otherwise None
+ * @return An optional of the value if the case matches and the block returns true, otherwise null
  * @see takeIf
  */
-inline fun <T, CS: UCases<CS>> Union<CS>.takeIfWhen(
+inline fun <T: Any, CS: UCases<CS>> Union<CS>.takeIfWhen(
     case: UCase<CS, T>,
     block: (T) -> Boolean
-): Optional<T> {
+): T? {
     return runWhen(case) {
-        return if (block(this)) this.asSome() else Optional.None
+        return if (block(this)) this else null
     }
 }
 
@@ -83,13 +83,13 @@ inline fun <T, CS: UCases<CS>> Union<CS>.takeIfWhen(
  * This function will only run the block if the union matches the [case].
  * @param case The case to check for
  * @param block The block to run if the case matches
- * @return An optional of the value if the case matches and the block returns false, otherwise None
+ * @return An optional of the value if the case matches and the block returns false, otherwise null
  * @see takeUnless
  */
-inline fun <T, CS: UCases<CS>> Union<CS>.takeUnlessWhen(
+inline fun <T: Any, CS: UCases<CS>> Union<CS>.takeUnlessWhen(
     case: UCase<CS, T>,
     block: (T) -> Boolean
-): Optional<T> {
+): T? {
     return takeIfWhen(case) {
         !block(it)
     }
@@ -137,7 +137,7 @@ class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
      * @param case The case to check for
      * @param block The block to change the union
      */
-    inline fun <T> changeWhen(
+    inline fun <T: Any> changeWhen(
         case: UCase<CS, T>,
         block: T.() -> Union<CS>
     ) {
@@ -203,22 +203,22 @@ class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
      * Performs [io.github.mackimaow.kotlin.union.runWhen] on the current union
      * @param case The case to check for
      * @param block The block to run if the case matches
-     * @return An optional of the result of the block if the case matches, otherwise None
+     * @return An optional of the result of the block if the case matches, otherwise null
      * @see io.github.mackimaow.kotlin.union.runWhen
     */
-    inline fun <T, R> runWhen(
+    inline fun <T: Any, R> runWhen(
         case: UCase<CS, T>,
         block: T.() -> R
     ) = current.runWhen(case, block)
 
     /**
-     * Performs [io.github.mackimaow.kotlin.union.alsoSome] on the current union
+     * Performs [io.github.mackimaow.kotlin.union.alsoWhen] on the current union
      * @param case The case to check for
      * @param block The block to run if the case matches
      * @return The union itself
-     * @see io.github.mackimaow.kotlin.union.alsoSome
+     * @see io.github.mackimaow.kotlin.union.alsoWhen
      */
-    inline fun <T> alsoWhen(
+    inline fun <T: Any> alsoWhen(
         case: UCase<CS, T>,
         block: (T) -> Unit
     ) = current.alsoWhen(case, block)
@@ -230,7 +230,7 @@ class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
      * @return The union itself
      * @see io.github.mackimaow.kotlin.union.applyWhen
      */
-    inline fun <T> applyWhen(
+    inline fun <T: Any> applyWhen(
         case: UCase<CS, T>,
         block: T.() -> Unit
     ) = current.applyWhen(case, block)
@@ -239,10 +239,10 @@ class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
      * Performs [io.github.mackimaow.kotlin.union.letWhen] on the current union
      * @param case The case to check for
      * @param block The block to run if the case matches
-     * @return An optional of the result of the block if the case matches, otherwise None
+     * @return An optional of the result of the block if the case matches, otherwise null
      * @see io.github.mackimaow.kotlin.union.letWhen
      */
-    inline fun <T, R> letWhen(
+    inline fun <T: Any, R> letWhen(
         case: UCase<CS, T>,
         block: (T) -> R
     ) = current.letWhen(case, block)
@@ -251,10 +251,10 @@ class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
      * Performs [io.github.mackimaow.kotlin.union.takeIfWhen] on the current union
      * @param case The case to check for
      * @param block The block to run if the case matches
-     * @return An optional of the value if the case matches and the block returns true, otherwise None
+     * @return An optional of the value if the case matches and the block returns true, otherwise null
      * @see io.github.mackimaow.kotlin.union.takeIfWhen
      */
-    inline fun <T> takeIfWhen(
+    inline fun <T: Any> takeIfWhen(
         case: UCase<CS, T>,
         block: (T) -> Boolean
     ) = current.takeIfWhen(case, block)
@@ -263,10 +263,10 @@ class MorphReceiver<CS: UCases<CS>> (var current: Union<CS>) {
      * Performs [io.github.mackimaow.kotlin.union.takeUnlessWhen] on the current union
      * @param case The case to check for
      * @param block The block to run if the case matches
-     * @return An optional of the value if the case matches and the block returns false, otherwise None
+     * @return An optional of the value if the case matches and the block returns false, otherwise null
      * @see io.github.mackimaow.kotlin.union.takeUnlessWhen
      */
-    inline fun <T> takeUnlessWhen(
+    inline fun <T: Any> takeUnlessWhen(
         case: UCase<CS, T>,
         block: (T) -> Boolean
     ) = current.takeUnlessWhen(case, block)

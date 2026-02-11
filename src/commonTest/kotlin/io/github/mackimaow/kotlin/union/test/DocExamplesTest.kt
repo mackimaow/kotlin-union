@@ -17,19 +17,19 @@ class DocExamplesTest {
     }
     // Union usage:
     fun createColor(hexValue: Int): Union<ColorCases> {
-        hexValue.wrapAs(ColorCases).getOrThrow()
+        hexValue.wrapAs(ColorCases)!!
         return hexValue.wrapAs(ColorCases.INT) // *or* hexValue.wrapAs(ColorCases)!!
     }
     fun createRed(): Union<ColorCases> {
-        "red".wrapAs(ColorCases).getOrThrow()
+        "red".wrapAs(ColorCases)!!
         return ColorCases.RED.wrap() // *or* "red".wrapAs(ColorCases)!!
     }
     fun createBlue(): Union<ColorCases> {
-        "blue".wrapAs(ColorCases).getOrThrow()
+        "blue".wrapAs(ColorCases)!!
         return ColorCases.BLUE.wrap() // *or* "blue".wrapAs(ColorCases)!!
     }
     fun createGreen(): Union<ColorCases> {
-        "green".wrapAs(ColorCases).getOrThrow()
+        "green".wrapAs(ColorCases)!!
         return ColorCases.GREEN.wrap() // *or* "green".wrapAs(ColorCases)!!
     }
 
@@ -37,24 +37,24 @@ class DocExamplesTest {
     //    List<Int> | List<String>
     object ColorListCases: MatchCases<ColorListCases>() {
         val INTS by instance<List<Int>> {  // I specified a typeCast for List<Int>
-            (it as? List<*>).asOptional().takeIfSome {
-                isNotEmpty() && this[0] is Int
-            }.letSome { list ->
+            (it as? List<*>)?.takeIf { list ->
+                list.isNotEmpty() && list[0] is Int
+            }.let { list ->
                 @Suppress("UNCHECKED_CAST")
                 list as List<Int>
             }
         }
         val STRINGS by instance<List<String>> {  // I specified a typeCast for List<String>
-            (it as? List<*>).asOptional().takeIfSome {
-                isNotEmpty() && this[0] is String
-            }.letSome { list ->
+            (it as? List<*>)?.takeIf { list ->
+                list.isNotEmpty() && list[0] is String
+            }.let { list ->
                 @Suppress("UNCHECKED_CAST")
                 list as List<String>
             }
         }
         val AMBIGUOUS_LIST by instance<List<*>> {  // I added an instance for the ambiguous list
-            (it as? List<*>).asOptional().takeIfSome {
-                isEmpty()
+            (it as? List<*>)?.takeIf { list ->
+                list.isEmpty()
             }
         }
     }

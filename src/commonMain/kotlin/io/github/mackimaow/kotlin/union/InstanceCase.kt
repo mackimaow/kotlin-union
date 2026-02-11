@@ -13,8 +13,8 @@ package io.github.mackimaow.kotlin.union
  *
  * @see UCases
  */
-class InstanceCase<CS: UCases<CS>, T> internal constructor(
-    override val typeCast: (Any?) -> Optional<T>,
+class InstanceCase<CS: UCases<CS>, T: Any> internal constructor(
+    override val typeCast: (Any?) -> T?,
     override val name: String,
     override val ordinal: Int,
     override val parent: CS
@@ -40,6 +40,6 @@ class InstanceCase<CS: UCases<CS>, T> internal constructor(
  * @param case the [InstanceCase] to wrap the object as
  * @return the [this] object wrapped as a [Union]
  */
-fun <CS: UCases<CS>, T> T.wrapAs(case: InstanceCase<CS, T>): Union<CS> {
+fun <CS: UCases<CS>, T: Any> T.wrapAs(case: InstanceCase<CS, T>): Union<CS> {
     return case.wrap(this)
 }

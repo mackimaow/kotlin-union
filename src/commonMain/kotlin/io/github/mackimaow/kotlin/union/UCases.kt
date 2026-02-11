@@ -2,7 +2,6 @@ package io.github.mackimaow.kotlin.union
 
 import kotlin.reflect.KProperty
 import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.typeOf
 
@@ -35,7 +34,7 @@ sealed class UCases<CS: UCases<CS>> {
      * @param T the type of the target object
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    protected fun <T> obj(
+    protected fun <T: Any> obj(
         obj: T
     ) = case.obj(obj)
 
@@ -45,7 +44,7 @@ sealed class UCases<CS: UCases<CS>> {
      * @param T the type to check for the case
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    protected inline fun <@TypeMustHaveNoGenericArgs reified T> instance() = case.instance<T>()
+    protected inline fun <@TypeMustHaveNoGenericArgs reified T: Any> instance() = case.instance<T>()
 
     /**
      * Used to specify a class that matches by a type check to this [UCases].
@@ -53,12 +52,12 @@ sealed class UCases<CS: UCases<CS>> {
      * checking types (see examples in [UCases]).
      * @param T the type to check for the case
      * @param toType the conversion lambda to be used to cast an instance to type [T]
-     * if it is of type [T] otherwise [Optional.None]
+     * if it is of type [T] otherwise null
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    protected fun <T> instance(
-        toType: (Any?) -> Optional<T>
-    ) = case.instance<T>(toType)
+    protected fun <T: Any> instance(
+        toType: (Any?) -> T?
+    ) = case.instance(toType)
 
     /**
      * Used to specify a class of instances to be added to this [UCases].
@@ -67,7 +66,7 @@ sealed class UCases<CS: UCases<CS>> {
      * @param isCase the predicate lambda to be used to check if an instance is considered as this case
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    protected inline fun <@TypeMustHaveNoGenericArgs reified T> instanceWhen(
+    protected inline fun <@TypeMustHaveNoGenericArgs reified T: Any> instanceWhen(
         noinline isCase: (T) -> Boolean,
     ) = case.instanceWhen(isCase)
 
@@ -76,12 +75,12 @@ sealed class UCases<CS: UCases<CS>> {
      * is specified to combat type erasure when checking types (see examples in [UCases]).
      * @param T the type to be added to the [UCases] and then to the [Union]
      * @param toType the conversion lambda to be used to cast an instance to type [T]
-     * if it is of type [T] otherwise [Optional.None]
+     * if it is of type [T] otherwise null
      * @param isCase the predicate lambda to be used to check if an instance is considered as this case
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    protected fun <T> instanceWhen(
-        toType: (Any?) -> Optional<T>,
+    protected fun <T: Any> instanceWhen(
+        toType: (Any?) -> T?,
         isCase: (T) -> Boolean,
     ) = case.instanceWhen(toType, isCase)
 
@@ -155,9 +154,9 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      * @param T the type of the target object
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    fun <T> obj(
+    fun <T: Any> obj(
         obj: T
-    ): UCaseProp<CS, T, ObjectCase<CS, T>> {
+    ): UCaseProp<CS, ObjectCase<CS, T>> {
         val createCase = { name: String, ordinal: Int, parent: CS ->
             ObjectCase(obj, name, ordinal, parent)
         }
@@ -170,13 +169,10 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      * @param T the type to check for the case
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    inline fun <@TypeMustHaveNoGenericArgs reified T> instance(): UCaseProp<CS, T, InstanceCase<CS, T>> {
+    inline fun <@TypeMustHaveNoGenericArgs reified T: Any> instance(): UCaseProp<CS, InstanceCase<CS, T>> {
         typeMustNotHaveGenericArgs<T>("instance")
         return instance {
-            if (it is T)
-                Optional.Some(it)
-            else
-                Optional.None
+            it as? T
         }
     }
 
@@ -184,32 +180,18 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      * Used to specify a class that matches by a type check to this [UCases].
      * A conversion lambda [toType] is specified to combat type erasure when
      * checking types (see examples in [UCases]).
-     * @param T the type to check for the case
+     * @param T the non-nullable type to check for the case
      * @param toType the conversion lambda to be used to cast an instance to type [T]
-     * if it is of type [T] otherwise [Optional.None]
+     * if it is of type [T] otherwise null.
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    fun <T> instance(
-        toType: (Any?) -> Optional<T>
-    ): UCaseProp<CS, T, InstanceCase<CS, T>> {
+    fun <T: Any> instance(
+        toType: (Any?) -> T?
+    ): UCaseProp<CS, InstanceCase<CS, T>> {
         val createCase = { name: String, ordinal: Int, parent: CS ->
             InstanceCase(toType, name, ordinal, parent)
         }
         return UCaseProp(createCase)
-    }
-
-    /**
-     * Don't use this function explicitly!
-     */
-    @Deprecated(
-        "Use `instance<T>(toType)` instead. This function is not meant to be used explicitly and will be removed in 3.0.0",
-        ReplaceWith("instance<T>(toType)")
-    )
-    fun <T> instance(
-        type: KClass<*>,
-        toType: (Any?) -> Optional<T>
-    ): UCaseProp<CS, T, InstanceCase<CS, T>> {
-        return instance(toType)
     }
 
     /**
@@ -219,16 +201,13 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      * @param isCase the predicate lambda to be used to check if an instance is considered as this case
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    inline fun <@TypeMustHaveNoGenericArgs reified T> instanceWhen(
+    inline fun <@TypeMustHaveNoGenericArgs reified T: Any> instanceWhen(
         noinline isCase: (T) -> Boolean,
-    ): UCaseProp<CS, T, SpecificInstanceCase<CS, T>> {
+    ): UCaseProp<CS, SpecificInstanceCase<CS, T>> {
         typeMustNotHaveGenericArgs<T>("instanceWhen")
         return instanceWhen(
             toType = {
-                if (it is T)
-                    Optional.Some(it)
-                else
-                    Optional.None
+                it as? T
             },
             isCase
         )
@@ -239,44 +218,20 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      * is specified to combat type erasure when checking types (see examples in [UCases]).
      * @param T the type to be added to the [UCases] and then to the [Union]
      * @param toType the conversion lambda to be used to cast an instance to type [T]
-     * if it is of type [T] otherwise [Optional.None]
+     * if it is of type [T] otherwise null
      * @param isCase the predicate lambda to be used to check if an instance is considered as this case
      * @return [UCaseProp] the case to be registered as a property delegate
      */
-    fun <T> instanceWhen(
-        toType: (Any?) -> Optional<T>,
+    fun <T: Any> instanceWhen(
+        toType: (Any?) -> T?,
         isCase: (T) -> Boolean,
-    ): UCaseProp<CS, T, SpecificInstanceCase<CS, T>> {
+    ): UCaseProp<CS, SpecificInstanceCase<CS, T>> {
         val createCase = { name: String, ordinal: Int, parent: CS ->
             SpecificInstanceCase(isCase, toType, name, ordinal, parent)
         }
         return UCaseProp(createCase)
     }
 
-    /**
-     * Don't use this function explicitly!
-     */
-    @Deprecated(
-        "Use `instanceWhen<T>(isCase)` instead. This function is not meant to be used explicitly and will be removed in 3.0.0",
-        ReplaceWith("instanceWhen<T>(isCase)")
-    )
-    fun <T> instanceWhen(
-        type: KClass<*>,
-        isCase: (T) -> Boolean
-    ): UCaseProp<CS, T, SpecificInstanceCase<CS, T>> {
-        return instanceWhen(
-            toType = {
-                if (type.isInstance(it)) {
-                    @Suppress("UNCHECKED_CAST")
-                    Optional.Some(
-                        it as T
-                    )
-                } else
-                    Optional.None
-            },
-            isCase = isCase
-        )
-    }
 
     /**
      * Used to specify a [UCase] that is a union of instances.
@@ -286,7 +241,7 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
      */
     fun <CSChild: MatchCases<CSChild>> union(
         cases: CSChild
-    ): UCaseProp<CS, Union<CSChild>, UnionCase<CS, CSChild>> {
+    ): UCaseProp<CS, UnionCase<CS, CSChild>> {
         val createCase = { name: String, ordinal: Int, parent: CS ->
             cases.assertNotRecursiveWithUnionCase(parent)
             UnionCase(cases, name, ordinal, parent)
@@ -304,7 +259,7 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
     fun <CSChild: MatchCases<CSChild>> unionWhen(
         cases: CSChild,
         isCase: (Union<CSChild>) -> Boolean
-    ): UCaseProp<CS, Union<CSChild>, SpecificUnionCase<CS, CSChild>> {
+    ): UCaseProp<CS, SpecificUnionCase<CS, CSChild>> {
         val createCase = { name: String, ordinal: Int, parent: CS ->
             cases.assertNotRecursiveWithUnionCase(parent)
             SpecificUnionCase(cases, isCase, name, ordinal, parent)
@@ -318,7 +273,7 @@ class UCaseSupplier<CS: UCases<CS>> internal constructor(){
  * Delegation is used with the sole purpose of protecting the user from misuse
  * of protected member functions within [UCases].
  */
-class UCaseProp<CS: UCases<CS>, T, C: UCase<CS, T>> internal constructor(
+class UCaseProp<CS: UCases<CS>, C: UCase<CS, *>> internal constructor(
     internal val createCase: (String, Int, CS) -> C
 ){
     /**

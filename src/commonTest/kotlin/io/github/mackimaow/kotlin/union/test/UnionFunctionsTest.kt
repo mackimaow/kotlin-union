@@ -38,16 +38,16 @@ class UnionFunctionsTest {
                 color.runWhen(NUMBER) {
                     runWhen(INT) {
                         this
-                    }.toNullable() ?: runWhen(LONG) {
+                    } ?: runWhen(LONG) {
                         this.toInt()
-                    }.toNullable() ?: -1
-                }.toNullable() ?: color.runWhen(RED) {
+                    } ?: -1
+                } ?: color.runWhen(RED) {
                     3
-                }.toNullable() ?: color.runWhen(GREEN) {
+                } ?: color.runWhen(GREEN) {
                     4
-                }.toNullable() ?: color.runWhen(BLUE) {
+                } ?: color.runWhen(BLUE) {
                     5
-                }.toNullable() ?: 6
+                } ?: 6
             }
             val expectedResults = listOf(1, 2, 3, 4, 5)
             assertEquals(expectedResults, actualResults)
@@ -111,16 +111,16 @@ class UnionFunctionsTest {
                 color.letWhen(NUMBER) { number ->
                     number.letWhen(INT) {
                         it
-                    }.toNullable() ?: number.letWhen(LONG) {
+                    } ?: number.letWhen(LONG) {
                         it.toInt()
-                    }.toNullable() ?: -1
-                }.toNullable() ?: color.letWhen(RED) {
+                    } ?: -1
+                } ?: color.letWhen(RED) {
                     3
-                }.toNullable() ?: color.letWhen(GREEN) {
+                } ?: color.letWhen(GREEN) {
                     4
-                }.toNullable() ?: color.letWhen(BLUE) {
+                } ?: color.letWhen(BLUE) {
                     5
-                }.toNullable() ?: 6
+                } ?: 6
             }
             val expectedResults = listOf(1, 2, 3, 4, 5)
             assertEquals(expectedResults, actualResults)
@@ -134,16 +134,16 @@ class UnionFunctionsTest {
                 color.takeIfWhen(NUMBER) { number ->
                     number.takeIfWhen(INT) {
                         true
-                    }.runSome { true }.toNullable() ?: number.takeIfWhen(LONG) {
+                    }?.run { true } ?: number.takeIfWhen(LONG) {
                         false
-                    }.runSome { true }.toNullable() ?: false
-                }.runSome { 1 }.toNullable() ?: color.takeIfWhen(RED) {
+                    }?.run { true } ?: false
+                }?.run { 1 } ?: color.takeIfWhen(RED) {
                     false
-                }.runSome { 2 }.toNullable() ?: color.takeIfWhen(GREEN) {
+                }?.run { 2 } ?: color.takeIfWhen(GREEN) {
                     true
-                }.runSome { 3 }.toNullable() ?: color.takeIfWhen(BLUE) {
+                }?.run { 3 } ?: color.takeIfWhen(BLUE) {
                     false
-                }.runSome { 4 }.toNullable() ?: -1
+                }?.run { 4 } ?: -1
             }
             val expectedResults = listOf(1, -1, -1, 3, -1)
             assertEquals(expectedResults, actualResults)
@@ -157,16 +157,16 @@ class UnionFunctionsTest {
                 color.takeUnlessWhen(NUMBER) { number ->
                     number.takeUnlessWhen(INT) {
                         true
-                    }.runSome { false }.toNullable() ?: number.takeUnlessWhen(LONG) {
+                    }?.run { false } ?: number.takeUnlessWhen(LONG) {
                         false
-                    }.runSome { false }.toNullable() ?: true
-                }.runSome { 1 }.toNullable() ?: color.takeUnlessWhen(RED) {
+                    }?.run { false } ?: true
+                }?.run { 1 } ?: color.takeUnlessWhen(RED) {
                     false
-                }.runSome { 2 }.toNullable() ?: color.takeUnlessWhen(GREEN) {
+                }?.run { 2 } ?: color.takeUnlessWhen(GREEN) {
                     true
-                }.runSome { 3 }.toNullable() ?: color.takeUnlessWhen(BLUE) {
+                }?.run { 3 } ?: color.takeUnlessWhen(BLUE) {
                     false
-                }.runSome { 4 }.toNullable() ?: -1
+                }?.run { 4 } ?: -1
             }
             val expectedResults = listOf(-1, 1, 2, -1, 4)
             assertEquals(expectedResults, actualResults)
@@ -181,19 +181,19 @@ class UnionFunctionsTest {
                     changeByMorph(NUMBER) {
                         runWhen(INT) {
                             RED.wrap()
-                        }.runSome {
+                        }?.run {
                             return@changeByMorph this
                         }
                         runWhen(LONG) {
                             GREEN.wrap()
-                        }.runSome {
+                        }?.run {
                             return@changeByMorph this
                         }
                         return@changeByMorph current.wrapAs(NUMBER)
                     }
                     val wasBlue = runWhen(BLUE) {
                         true
-                    }.toNullable() ?: false
+                    } ?: false
                     changeWhen(BLUE) {
                         RED.wrap()
                     }
@@ -207,16 +207,16 @@ class UnionFunctionsTest {
                     runWhen(NUMBER) {
                         runWhen(INT) {
                             1
-                        }.toNullable() ?: runWhen(LONG) {
+                        } ?: runWhen(LONG) {
                             2
-                        }.toNullable() ?: -1
-                    }.toNullable() ?: runWhen(RED) {
+                        } ?: -1
+                    } ?: runWhen(RED) {
                         3
-                    }.toNullable() ?: runWhen(GREEN) {
+                    } ?: runWhen(GREEN) {
                         4
-                    }.toNullable() ?: runWhen(BLUE) {
+                    } ?: runWhen(BLUE) {
                         5
-                    }.toNullable() ?: 6
+                    } ?: 6
                 }
             }
             val expectedResults = listOf(4, 5, 4, 5, 3)
@@ -241,7 +241,7 @@ class UnionFunctionsTest {
                     }
                     val wasBlue = runWhen(BLUE) {
                         true
-                    }.toNullable() ?: false
+                    } ?: false
                     changeWhen(BLUE) {
                         RED.wrap()
                     }
@@ -294,7 +294,7 @@ class UnionFunctionsTest {
                     }
                     val wasBlue = runWhen(BLUE) {
                         true
-                    }.toNullable() ?: false
+                    } ?: false
                     changeWhen(BLUE) {
                         RED.wrap()
                     }
@@ -335,14 +335,14 @@ class UnionFunctionsTest {
                         var number = current.wrapAs(NUMBER)
                         letWhen(INT) {
                             number = RED.wrap()
-                        }.toNullable() ?: letWhen(LONG) {
+                        } ?: letWhen(LONG) {
                             number = GREEN.wrap()
                         }
                         number
                     }
                     val wasBlue = runWhen(BLUE) {
                         true
-                    }.toNullable() ?: false
+                    } ?: false
                     changeWhen(BLUE) {
                         RED.wrap()
                     }
@@ -356,16 +356,16 @@ class UnionFunctionsTest {
                     val result = runWhen(NUMBER) {
                         letWhen(INT) {
                             1
-                        }.toNullable() ?: letWhen(LONG) {
+                        } ?: letWhen(LONG) {
                             2
-                        }.toNullable() ?: -1
-                    }.toNullable() ?: letWhen(RED) {
+                        } ?: -1
+                    } ?: letWhen(RED) {
                         3
-                    }.toNullable() ?: letWhen(GREEN) {
+                    } ?: letWhen(GREEN) {
                         4
-                    }.toNullable() ?: letWhen(BLUE) {
+                    } ?: letWhen(BLUE) {
                         5
-                    }.toNullable() ?: 6
+                    } ?: 6
                     result
                 }
             }
@@ -383,18 +383,18 @@ class UnionFunctionsTest {
                         var number = current.wrapAs(NUMBER)
                         takeIfWhen(INT) {
                             it == 1
-                        }.runSome {
+                        }?.run {
                             number = RED.wrap()
-                        }.toNullable() ?: takeIfWhen(LONG) {
+                        } ?: takeIfWhen(LONG) {
                             it == 2L
-                        }.runSome {
+                        }?.run {
                             number = GREEN.wrap()
-                        }.toNullable()
+                        }
                         number
                     }
                     val wasBlue = runWhen(BLUE) {
                         true
-                    }.toNullable() ?: false
+                    } ?: false
                     changeWhen(BLUE) {
                         RED.wrap()
                     }
@@ -408,26 +408,26 @@ class UnionFunctionsTest {
                     val result = runWhen(NUMBER) {
                         takeIfWhen(INT) {
                             true
-                        }.runSome {
+                        }?.run {
                             1
-                        }.toNullable() ?: takeIfWhen(LONG) {
+                        } ?: takeIfWhen(LONG) {
                             true
-                        }.runSome {
+                        }?.run {
                             2
-                        }.toNullable() ?: -1
-                    }.toNullable() ?: takeIfWhen(RED) {
+                        } ?: -1
+                    } ?: takeIfWhen(RED) {
                         true
-                    }.runSome {
+                    }?.run {
                         3
-                    }.toNullable() ?: takeIfWhen(GREEN) {
+                    } ?: takeIfWhen(GREEN) {
                         true
-                    }.runSome {
+                    }?.run {
                         4
-                    }.toNullable() ?: takeIfWhen(BLUE) {
+                    } ?: takeIfWhen(BLUE) {
                         true
-                    }.runSome {
+                    }?.run {
                         5
-                    }.toNullable() ?: 6
+                    } ?: 6
                     result
                 }
             }
@@ -445,18 +445,18 @@ class UnionFunctionsTest {
                         var number = current.wrapAs(NUMBER)
                         takeUnlessWhen(INT) {
                             it != 1
-                        }.runSome {
+                        }?.run {
                             number = RED.wrap()
-                        }.toNullable() ?: takeUnlessWhen(LONG) {
+                        } ?: takeUnlessWhen(LONG) {
                             it != 2L
-                        }.runSome {
+                        }?.run {
                             number = GREEN.wrap()
-                        }.toNullable()
+                        }
                         number
                     }
                     val wasBlue = runWhen(BLUE) {
                         true
-                    }.toNullable() ?: false
+                    } ?: false
                     changeWhen(BLUE) {
                         RED.wrap()
                     }
@@ -470,26 +470,26 @@ class UnionFunctionsTest {
                     val result = runWhen(NUMBER) {
                         takeUnlessWhen(INT) {
                             false
-                        }.runSome {
+                        }?.run {
                             1
-                        }.toNullable() ?: takeUnlessWhen(LONG) {
+                        } ?: takeUnlessWhen(LONG) {
                             false
-                        }.runSome {
+                        }?.run {
                             2
-                        }.toNullable() ?: -1
-                    }.toNullable() ?: takeUnlessWhen(RED) {
+                        } ?: -1
+                    } ?: takeUnlessWhen(RED) {
                         false
-                    }.runSome {
+                    }?.run {
                         3
-                    }.toNullable() ?: takeUnlessWhen(GREEN) {
+                    } ?: takeUnlessWhen(GREEN) {
                         false
-                    }.runSome {
+                    }?.run {
                         4
-                    }.toNullable() ?: takeUnlessWhen(BLUE) {
+                    } ?: takeUnlessWhen(BLUE) {
                         false
-                    }.runSome {
+                    }?.run {
                         5
-                    }.toNullable() ?: 6
+                    } ?: 6
                     result
                 }
             }
@@ -507,10 +507,10 @@ class UnionFunctionsTest {
                         runWhen(NUMBER) {
                             runWhen(INT) {
                                 1
-                            }.toNullable() ?: runWhen(LONG) {
+                            }?: runWhen(LONG) {
                                 2
-                            }.toNullable() ?: -1
-                        }.toNullable() ?: -1
+                            } ?: -1
+                        } ?: -1
                     }
                 }
             }
@@ -530,11 +530,11 @@ class UnionFunctionsTest {
                         }
                     }.runWhen(RED) {
                         1
-                    }.toNullable() ?: runWhen(GREEN) {
+                    } ?: runWhen(GREEN) {
                         2
-                    }.toNullable() ?: runWhen(BLUE) {
+                    } ?: runWhen(BLUE) {
                         3
-                    }.toNullable() ?: 4
+                    } ?: 4
                 }
             }
             val expectedResults = listOf(1, 1, 1, 2, 3)

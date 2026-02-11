@@ -22,18 +22,20 @@ class UnionCase <
     override val parent: CSParent
 ): UCase<CSParent, Union<CSChild>>() {
     override val isCase: (Union<CSChild>) -> Boolean = { true }
-    override val typeCast: (Any?) -> Optional<Union<CSChild>> = {
-        val unwrappedValue = unwrapCompletelyIfUnion(it)
-        unionCases.wrap(unwrappedValue)
+    override val typeCast: (Any?) -> Union<CSChild>? = {
+        it?.run {
+            val unwrappedValue = unwrapCompletelyIfUnion(it)
+            unionCases.wrap(unwrappedValue)
+        }
     }
 
     internal fun recursiveToWrappableItem(
         unwrappedValue: Any?,
-        cachedUnionValues: MutableMap<MatchCases<*>, Optional<Union<*>>>
-    ): Optional<*> {
-        cachedUnionValues[unionCases]?.runSome {
+        cachedUnionValues: MutableMap<MatchCases<*>, Union<*>?>
+    ): Any? {
+        cachedUnionValues[unionCases]?.run {
             @Suppress("UNCHECKED_CAST")
-            return (this as Union<CSChild>).asSome()
+            return (this as Union<CSChild>)
         }
         return unionCases.recursiveWrap(unwrappedValue, cachedUnionValues)
     }

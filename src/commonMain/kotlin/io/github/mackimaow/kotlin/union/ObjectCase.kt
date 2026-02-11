@@ -13,15 +13,15 @@ package io.github.mackimaow.kotlin.union
  * @property parent the [UCases] parent that registered this obj
  * @see UCases
  */
-class ObjectCase<CS: UCases<CS>, T>  internal constructor(
+class ObjectCase<CS: UCases<CS>, T: Any>  internal constructor(
     private val obj: T,
     override val name: String,
     override val ordinal: Int,
     override val parent: CS
 ): UCase<CS, T>() {
     override val isCase: (Any?) -> Boolean = { it == obj && obj == it }
-    override val typeCast: (Any?) -> Optional<T> = {
-        if (isCase(it)) obj.asSome() else Optional.None
+    override val typeCast: (Any?) -> T? = {
+        if (isCase(it)) obj else null
     }
 
     /**

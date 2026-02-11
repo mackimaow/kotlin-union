@@ -14,25 +14,26 @@ open class MatchCases<CS: MatchCases<CS>>: UCases<CS>() {
      * The return value is determined with matching with the cases that are registered by this [MatchCases]
      */
     fun canWrap(obj: Any?): Boolean {
-        return wrap(obj).isSome
+        return wrap(obj) != null
     }
 
     /**
      * @return the instance [obj] wrapped as [Union], or
-     * [Optional.None] if it doesn't match the cases in this [MatchCases].
+     * null if it doesn't match the cases in this [MatchCases].
      */
-    fun wrap(obj: Any?): Optional<Union<CS>> {
+    fun wrap(obj: Any?): Union<CS>? {
+        if(obj == null) return null
         val unwrappedValue = unwrapCompletelyIfUnion(obj)
-        return asWrappableItem(unwrappedValue).letSome {
+        return asWrappableItem(unwrappedValue)?.let {
             wrapUnion(it)
         }
     }
 
     internal fun recursiveWrap(
         unwrappedValue: Any?,
-        cachedUnionValues: MutableMap<MatchCases<*>, Optional<Union<*>>>
-    ): Optional<Union<CS>> {
-        val item = asWrappableItem(unwrappedValue, cachedUnionValues).letSome { value ->
+        cachedUnionValues: MutableMap<MatchCases<*>, Union<*>?>
+    ): Union<CS>? {
+        val item = asWrappableItem(unwrappedValue, cachedUnionValues)?.let { value ->
             wrapUnion<CS>(value)
         }
         cachedUnionValues[this] = item
@@ -41,8 +42,8 @@ open class MatchCases<CS: MatchCases<CS>>: UCases<CS>() {
 
     private fun asWrappableItem(
         unwrappedValue: Any?,
-        cachedUnionValues: MutableMap<MatchCases<*>, Optional<Union<*>>> = mutableMapOf()
-    ): Optional<Any?> {
+        cachedUnionValues: MutableMap<MatchCases<*>, Union<*>?> = mutableMapOf()
+    ): Any? {
         for (case in cases) {
             val item = when (case) {
                 is UnionCase<*, *> ->
@@ -51,19 +52,19 @@ open class MatchCases<CS: MatchCases<CS>>: UCases<CS>() {
                     case.recursiveToWrappableItem(unwrappedValue, cachedUnionValues)
                 else -> case.getValueIfMatchesCase(unwrappedValue)
             }
-            if(item is Optional.Some)
+            if (item != null)
                 return item
         }
-        return Optional.None
+        return null
     }
 }
 
 /**
  * Wraps an instance as a type for a [Union] if it can be wrapped.
  * @param cases the [MatchCases] that this union is registered with
- * @return the instance wrapped as a [Optional.Some] of a [Union], or [Optional.None] if it doesn't match the cases
+ * @return the instance of a [Union], or null if it doesn't match the cases
  */
-fun <CS: MatchCases<CS>> Any?.wrapAs(cases: CS): Optional<Union<CS>> = cases.wrap(this)
+fun <CS: MatchCases<CS>> Any?.wrapAs(cases: CS): Union<CS>? = cases.wrap(this)
 
 /**
  * Checks if an instance can be wrapped as a type for a [Union].
