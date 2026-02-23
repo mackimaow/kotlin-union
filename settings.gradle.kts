@@ -1,5 +1,11 @@
-
 rootProject.name = "kotlin-union"
 
-includeBuild("convention-plugins")
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            from(files("gradle/versions.toml"))
+        }
+    }
+}
 
+includeBuild("convention-plugins")

@@ -1,11 +1,7 @@
-import org.jetbrains.kotlin.ir.backend.js.compile
-
 plugins {
-    kotlin("multiplatform") version "2.0.10"
+    alias(libs.plugins.kotlinMultiplatform)
     id("convention.publication")
-    id("org.jetbrains.kotlinx.kover") version "0.9.1"
-//    id("java-library")
-//    jacoco
+    alias(libs.plugins.kover)
 }
 
 repositories {
@@ -13,7 +9,7 @@ repositories {
 }
 
 group = "io.github.mackimaow"
-version = "2.0.1"
+version = "3.0.0"
 
 kotlin {
     jvm()
@@ -43,7 +39,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+                implementation(libs.coroutines.test)
             }
         }
         val jvmMain by getting
@@ -54,35 +50,3 @@ kotlin {
         val nativeTest by getting
     }
 }
-
-// Jacoco plugin
-//
-//jacoco {
-//    toolVersion = "0.8.10" // Specify the JaCoCo version
-//    reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
-//}
-//
-//tasks.getByName("jvmTest") {
-//    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
-//}
-//
-//tasks.jacocoTestReport {
-//    dependsOn("jvmTest")
-//
-//    val coverageSourceDirs = files(
-//        layout.projectDirectory.dir("src/commonMain/kotlin"),
-//        layout.projectDirectory.dir("src/jvmMain/kotlin")
-//    )
-//
-//    val classFiles = fileTree(layout.buildDirectory.dir("classes/kotlin/jvm"))
-//    classDirectories.setFrom(classFiles)
-//    sourceDirectories.setFrom(coverageSourceDirs)
-//
-//    executionData
-//        .setFrom(layout.buildDirectory.file("jacoco/jvmTest.exec"))
-//
-//    reports {
-//        xml.required = true
-//        html.required = true
-//    }
-//}

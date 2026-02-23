@@ -12,6 +12,7 @@ package io.github.mackimaow.kotlin.union
  */
 expect sealed interface Union<CS: UCases<CS>>
 
+
 internal expect fun <CS: UCases<CS>> wrapUnion(obj: Any): Union<CS>
 
 /**

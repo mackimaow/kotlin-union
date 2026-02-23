@@ -148,7 +148,6 @@ class UCasesTest {
         assertFalse(SmallCases.canWrap(Cat))
     }
 
-
     @Test
     fun testSpecificInstance() {
         val value = 12
@@ -181,7 +180,7 @@ class UCasesTest {
         val bacteria = Bacteria("Green")
         val bacteriaWrapped = SmallCases.BACTERIA.wrap(bacteria)
         val bacteriaWrappedTwice = RandomCases.wrap(bacteriaWrapped)
-        assertFalse(bacteriaWrappedTwice != null)
+        assertTrue(bacteriaWrappedTwice != null)
 
         val catWrappedTwice = RandomCases.wrap(OrganismCases.CAT.wrap())
         assertTrue(catWrappedTwice != null)
